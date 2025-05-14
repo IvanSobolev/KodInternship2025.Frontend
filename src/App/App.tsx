@@ -1,5 +1,4 @@
-// src/App.js
-import { useTaskManager } from "./hooks/useTaskManager";
+import { useTaskManager } from "../Hooks/useTaskManager";
 import { format } from 'date-fns';
 import {
   MdAdd,
@@ -14,20 +13,17 @@ import {
 } from 'react-icons/md';
 import { RiPencilFill } from 'react-icons/ri';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { TaskStatus } from '../types';
 
 export default function App() {
   const {
     tab,
     setTab,
-
-    // для таблицы и фильтров
     filteredTasks,
     filterStatus,
     setFilterStatus,
     filterDepartment,
     setFilterDepartment,
-
-    // для работы с задачами
     tasks,
     newTask,
     setNewTask,
@@ -38,12 +34,8 @@ export default function App() {
     removeTask,
     editingTaskId,
     setEditingTaskId,
-
-    // для просмотра одной задачи
     selectedTask,
     setSelectedTask,
-
-    // для работников
     workers,
     newWorker,
     setNewWorker,
@@ -52,9 +44,8 @@ export default function App() {
     addWorker,
   } = useTaskManager();
 
-  const statuses = ['Нужно сделать', 'В процессе', 'На проверке', 'Сделано'];
+  const statuses: TaskStatus[] = ['Нужно сделать', 'В процессе', 'На проверке', 'Сделано'];
 
-  // для вывода даты при редактировании
   const editTask = editingTaskId != null
     ? tasks.find(t => t.id === editingTaskId)
     : null;
@@ -75,44 +66,42 @@ export default function App() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Вкладки */}
       <div role="tablist" className="tabs tabs-boxed mb-6">
-        <a
+        <button
           role="tab"
           className={`tab ${tab === 'tasks' ? 'tab-active' : ''}`}
           onClick={() => setTab('tasks')}
         >
           Задачи
-        </a>
-        <a
+        </button>
+        <button
           role="tab"
           className={`tab ${tab === 'workers' ? 'tab-active' : ''}`}
           onClick={() => setTab('workers')}
         >
           Работники
-        </a>
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
-        {/* --- Задачи --- */}
         {tab === 'tasks' && (
           <motion.div key="tasks" {...animationProps}>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
               <div className="flex gap-4 w-full sm:max-w-lg">
                 <div className="relative flex-1">
                   <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
-                <input
-                  type="text"
-                  className="input input-bordered pl-10 w-full"
-                  placeholder="Поиск отдела"
-                  value={filterDepartment}
-                  onChange={e => setFilterDepartment(e.target.value)}
-                />
+                  <input
+                    type="text"
+                    className="input input-bordered pl-10 w-full"
+                    placeholder="Поиск отдела"
+                    value={filterDepartment}
+                    onChange={e => setFilterDepartment(e.target.value)}
+                  />
                 </div>
                 <select
                   className="select select-bordered"
                   value={filterStatus}
-                  onChange={e => setFilterStatus(e.target.value)}
+                  onChange={e => setFilterStatus(e.target.value as TaskStatus | '')}
                 >
                   <option value="">Все статусы</option>
                   {statuses.map(s => (
@@ -143,85 +132,84 @@ export default function App() {
                     <th className="text-right">Действия</th>
                   </tr>
                 </thead>
-<tbody>
-  {filteredTasks.map(task => (
-    <tr key={task.id} className="hover:bg-base-100">
-      <td className="px-4 py-3">
-        <span className="mr-2">{task.id}</span>
-        <button
-          className="text-blue-500"
-          onClick={() => setSelectedTask(task)}
-        >
-          {task.name}
-        </button>
-      </td>
-      <td className="px-4 py-3">{task.department}</td>
-      <td className="px-4 py-3">{task.assignee || '-'}</td>
-      <td className="px-4 py-3 flex items-center justify-center">
-        {task.status === 'Нужно сделать' && (
-          <MdRadioButtonUnchecked size={20} className="text-gray-400" />
-        )}
-        {task.status === 'В процессе' && (
-          <MdOutlineRemoveCircle size={20} className="text-yellow-500" />
-        )}
-        {task.status === 'На проверке' && (
-          <MdHourglassEmpty size={20} className="text-blue-500" />
-        )}
-        {task.status === 'Сделано' && (
-          <MdCheckCircle size={20} className="text-green-500" />
-        )}
-      </td>
-      <td className="px-4 py-3 text-right whitespace-nowrap">
-        {task.status === 'Нужно сделать' && (
-          <button
-            className="btn btn-xs btn-outline mr-1"
-            onClick={() => {
-              setNewTask({
-                name: task.name,
-                text: task.text,
-                department: task.department,
-                assignee: task.assignee,
-                status: task.status
-              });
-              setEditingTaskId(task.id);
-              setShowTaskModal(true);
-            }}
-          >
-            <RiPencilFill size={16} />
-          </button>
-        )}
-        {task.status === 'На проверке' && (
-          <>
-            <button
-              className="btn btn-xs btn-success mr-1"
-              onClick={() => updateTaskStatus(task.id, 'Сделано')}
-            >
-              <MdCheck size={16} />
-            </button>
-            <button
-              className="btn btn-xs btn-warning mr-1"
-              onClick={() => updateTaskStatus(task.id, 'В процессе')}
-            >
-              <MdClose size={16} />
-            </button>
-          </>
-        )}
-        <button
-          className="btn btn-xs btn-error"
-          onClick={() => removeTask(task.id)}
-        >
-          <MdDelete size={16} />
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                <tbody>
+                  {filteredTasks.map(task => (
+                    <tr key={task.id} className="hover:bg-base-100">
+                      <td className="px-4 py-3">
+                        <span className="mr-2">{task.id}</span>
+                        <button
+                          className="text-blue-500"
+                          onClick={() => setSelectedTask(task)}
+                        >
+                          {task.name}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">{task.department}</td>
+                      <td className="px-4 py-3">{task.assignee || '-'}</td>
+                      <td className="px-4 py-3 flex items-center justify-center">
+                        {task.status === 'Нужно сделать' && (
+                          <MdRadioButtonUnchecked size={20} className="text-gray-400" />
+                        )}
+                        {task.status === 'В процессе' && (
+                          <MdOutlineRemoveCircle size={20} className="text-yellow-500" />
+                        )}
+                        {task.status === 'На проверке' && (
+                          <MdHourglassEmpty size={20} className="text-blue-500" />
+                        )}
+                        {task.status === 'Сделано' && (
+                          <MdCheckCircle size={20} className="text-green-500" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {task.status === 'Нужно сделать' && (
+                          <button
+                            className="btn btn-xs btn-outline mr-1"
+                            onClick={() => {
+                              setNewTask({
+                                name: task.name,
+                                text: task.text,
+                                department: task.department,
+                                assignee: task.assignee,
+                                status: task.status
+                              });
+                              setEditingTaskId(task.id);
+                              setShowTaskModal(true);
+                            }}
+                          >
+                            <RiPencilFill size={16} />
+                          </button>
+                        )}
+                        {task.status === 'На проверке' && (
+                          <>
+                            <button
+                              className="btn btn-xs btn-success mr-1"
+                              onClick={() => updateTaskStatus(task.id, 'Сделано')}
+                            >
+                              <MdCheck size={16} />
+                            </button>
+                            <button
+                              className="btn btn-xs btn-warning mr-1"
+                              onClick={() => updateTaskStatus(task.id, 'В процессе')}
+                            >
+                              <MdClose size={16} />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          className="btn btn-xs btn-error"
+                          onClick={() => removeTask(task.id)}
+                        >
+                          <MdDelete size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           </motion.div>
         )}
 
-        {/* --- Работники --- */}
         {tab === 'workers' && (
           <motion.div key="workers" {...animationPropsWorkers}>
             <button
@@ -256,7 +244,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* --- Модалка создания/редактирования задачи --- */}
       <dialog className={`modal ${showTaskModal ? 'modal-open' : ''}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">
@@ -291,7 +278,6 @@ export default function App() {
             ))}
           </select>
 
-          {/* Даты создания/редактирования */}
           {editTask && (
             <p className="text-sm text-gray-500 mb-4">
               Создано: {format(editTask.createdAt, 'dd.MM.yyyy HH:mm')}
@@ -319,7 +305,6 @@ export default function App() {
         </div>
       </dialog>
 
-      {/* --- Модалка просмотра задачи --- */}
       <dialog className={`modal ${selectedTask ? 'modal-open' : ''}`}>
         {selectedTask && (
           <div className="modal-box">
@@ -343,8 +328,6 @@ export default function App() {
         )}
       </dialog>
 
-
-      {/* --- Модалка добавления работника --- */}
       <dialog className={`modal ${showWorkerModal ? 'modal-open' : ''}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Новый работник</h3>

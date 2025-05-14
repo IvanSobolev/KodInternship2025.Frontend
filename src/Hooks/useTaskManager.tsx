@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import type { Task, Worker, TaskStatus, TabType, NewTask, NewWorker } from '../types';
 
 export const useTaskManager = () => {
-  const [tab, setTab] = useState('tasks');
-  const [editingTaskId, setEditingTaskId] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [tab, setTab] = useState<TabType>('tasks');
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const [tasks, setTasks] = useState([
+  const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
       name: 'Проверить сигнализацию',
@@ -48,16 +49,30 @@ export const useTaskManager = () => {
     }
   ]);
 
-  const [newTask, setNewTask] = useState({ name: '', text: '', department: '', assignee: '', status: 'Нужно сделать' });
+  const [newTask, setNewTask] = useState<NewTask>({ 
+    name: '', 
+    text: '', 
+    department: '', 
+    assignee: '', 
+    status: 'Нужно сделать' 
+  });
   const [showTaskModal, setShowTaskModal] = useState(false);
 
   const addTask = () => {
     if (!newTask.name || !newTask.department) return;
+    
     const now = new Date();
     if (editingTaskId) {
       setTasks(tasks.map(t =>
         t.id === editingTaskId
-          ? { ...t, name: newTask.name, text: newTask.text, department: newTask.department, assignee: newTask.assignee, updatedAt: now }
+          ? { 
+              ...t, 
+              name: newTask.name, 
+              text: newTask.text, 
+              department: newTask.department, 
+              assignee: newTask.assignee, 
+              updatedAt: now 
+            }
           : t
       ));
       setEditingTaskId(null);
@@ -77,34 +92,36 @@ export const useTaskManager = () => {
     setShowTaskModal(false);
   };
 
-  const updateTaskStatus = (id, status) => {
+  const updateTaskStatus = (id: number, status: TaskStatus) => {
     const now = new Date();
     setTasks(tasks.map(t =>
       t.id === id ? { ...t, status, updatedAt: now } : t
     ));
   };
 
-  const removeTask = (id) => {
+  const removeTask = (id: number) => {
     setTasks(tasks.filter(t => t.id !== id));
   };
 
-  const [workers, setWorkers] = useState([
+  const [workers, setWorkers] = useState<Worker[]>([
     { id: 1, name: 'Иван Петров', telegram: 'ivan_fire', department: 'Охрана' },
     { id: 2, name: 'Анна Смирнова', telegram: 'smirnova_cam', department: 'Монтаж' },
     { id: 3, name: 'Дмитрий Волков', telegram: 'volkov_it', department: 'ИТ' },
     { id: 4, name: 'Елена Кузнецова', telegram: 'kuzn_arch', department: 'Проектировщики' }
   ]);
 
-  const [newWorker, setNewWorker] = useState({ name: '', telegram: '', department: '' });
+  const [newWorker, setNewWorker] = useState<NewWorker>({ name: '', telegram: '', department: '' });
   const [showWorkerModal, setShowWorkerModal] = useState(false);
 
   const addWorker = () => {
+    if (!newWorker.name || !newWorker.department) return;
+    
     setWorkers([...workers, { ...newWorker, id: Date.now() }]);
     setNewWorker({ name: '', telegram: '', department: '' });
     setShowWorkerModal(false);
   };
 
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState<TaskStatus | ''>('');
   const [filterDepartment, setFilterDepartment] = useState('');
 
   const filteredTasks = tasks.filter(task =>
