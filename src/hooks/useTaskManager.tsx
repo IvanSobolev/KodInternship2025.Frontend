@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 export const useTaskManager = () => {
-
   const [tab, setTab] = useState('tasks');
+  const [editingTaskId, setEditingTaskId] = useState(null);
 
   const [tasks, setTasks] = useState([
     { id: 1, name: 'Проверить сигнализацию', text: 'Осмотреть панель в здании А', department: 'Охрана', status: 'Нужно сделать' },
@@ -15,8 +15,26 @@ export const useTaskManager = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
 
   const addTask = () => {
-    setTasks([...tasks, { ...newTask, id: Date.now() }]);
-    setNewTask({ name: '', text: '', department: '', status: 'Нужно сделать' });
+    if (!newTask.name || !newTask.text || !newTask.department) return;
+    if (editingTaskId) {
+
+      setTasks(tasks.map(t => 
+        t.id === editingTaskId 
+          ? { ...t, name: newTask.name, text: newTask.text, department: newTask.department }
+          : t
+      ));
+      setEditingTaskId(null); 
+    } else {
+     
+      setTasks([...tasks, {
+        id: Date.now(),
+        name: newTask.name,
+        text: newTask.text,
+        department: newTask.department,
+        status: 'В процессе'
+      }]);
+    }
+    setNewTask({ name: '', text: '', department: '' });
     setShowTaskModal(false);
   };
 
@@ -73,6 +91,8 @@ export const useTaskManager = () => {
     setFilterStatus,
     filterDepartment,
     setFilterDepartment,
-    filteredTasks
+    filteredTasks,
+    editingTaskId,
+    setEditingTaskId
   };
 };
