@@ -1,14 +1,14 @@
 import { useState } from 'react';
-
-const statuses = ['Нужно сделать', 'В процессе', 'Сделано'];
+import { MdAdd, MdClose, MdSearch, MdCheck, MdDelete } from 'react-icons/md';
 
 export default function App() {
   const [tab, setTab] = useState<'tasks' | 'workers'>('tasks');
+
   const [tasks, setTasks] = useState([
     { id: 1, name: 'Проверить сигнализацию', text: 'Осмотреть панель в здании А', department: 'Охрана', status: 'Нужно сделать' },
     { id: 2, name: 'Установить камеры', text: 'Установка камер в офисе 3', department: 'Монтаж', status: 'В процессе' },
     { id: 3, name: 'Проверка доступа', text: 'Тестирование системы доступа', department: 'ИТ', status: 'Сделано' },
-    { id: 4, name: 'Согласование чертежей', text: 'Отправить на утверждение', department: 'Проектировщики', status: 'Нужно сделать' }
+    { id: 4, name: 'Согласование чертежей', text: 'Отправить на утверждение', department: 'Проектировщики', status: 'На проверке' }
   ]);
 
   const [workers, setWorkers] = useState([
@@ -19,19 +19,24 @@ export default function App() {
   ]);
 
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterWorker, setFilterWorker] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
 
   const [newTask, setNewTask] = useState({ name: '', text: '', department: '', status: 'Нужно сделать' });
   const [newWorker, setNewWorker] = useState({ name: '', telegram: '', department: '' });
 
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showWorkerModal, setShowWorkerModal] = useState(false);
+
   const addTask = () => {
     setTasks([...tasks, { ...newTask, id: Date.now() }]);
     setNewTask({ name: '', text: '', department: '', status: 'Нужно сделать' });
+    setShowTaskModal(false);
   };
 
   const addWorker = () => {
     setWorkers([...workers, { ...newWorker, id: Date.now() }]);
     setNewWorker({ name: '', telegram: '', department: '' });
+    setShowWorkerModal(false);
   };
 
   const updateTaskStatus = (id, status) => {
@@ -44,7 +49,7 @@ export default function App() {
 
   const filteredTasks = tasks.filter(task =>
     (filterStatus ? task.status === filterStatus : true) &&
-    (filterWorker ? workers.find(w => w.name === filterWorker && w.department === task.department) : true)
+    (filterDepartment ? task.department.toLowerCase().includes(filterDepartment.toLowerCase()) : true)
   );
 
   return (
@@ -54,72 +59,105 @@ export default function App() {
         <a role="tab" className={`tab ${tab === 'workers' ? 'tab-active' : ''}`} onClick={() => setTab('workers')}>Работники</a>
       </div>
 
-      {tab === 'tasks' && (
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <input className="input input-bordered w-full" placeholder="Название" value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} />
-            <input className="input input-bordered w-full" placeholder="Текст" value={newTask.text} onChange={e => setNewTask({ ...newTask, text: e.target.value })} />
-            <input className="input input-bordered w-full" placeholder="Отдел" value={newTask.department} onChange={e => setNewTask({ ...newTask, department: e.target.value })} />
-            <select className="select select-bordered w-full" value={newTask.status} onChange={e => setNewTask({ ...newTask, status: e.target.value })}>
-              {statuses.map(s => <option key={s}>{s}</option>)}
-            </select>
-            <button className="btn btn-primary col-span-full" onClick={addTask}>Добавить задачу</button>
+      <div className={`${tab === 'tasks' ? '' : 'hidden'}`}>
+        <div className="flex justify-between mb-6">
+        <div className="relative z-0">
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+            <input
+              type="text"
+              className="input input-bordered pl-10"
+              placeholder="Поиск отдела"
+              value={filterDepartment}
+              onChange={e => setFilterDepartment(e.target.value)}
+            />
           </div>
 
+          <button className="btn btn-primary flex items-center gap-2" onClick={() => setShowTaskModal(true)}>
+            <MdAdd size={20} /> Добавить задачу
+          </button>
+        </div>
 
-          <div className="flex gap-4 mb-6">
-            <select className="select select-bordered" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="">Все статусы</option>
-              {statuses.map(s => <option key={s}>{s}</option>)}
-            </select>
-            <select className="select select-bordered" value={filterWorker} onChange={e => setFilterWorker(e.target.value)}>
-              <option value="">Все работники</option>
-              {workers.map(w => <option key={w.id}>{w.name}</option>)}
-            </select>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {filteredTasks.map(task => (
+            <div key={task.id} className="card shadow-xl border bg-base-100">
+              <div className="card-body relative">
+                <button
+                  className="absolute top-2 right-2 text-error"
+                  onClick={() => removeTask(task.id)}
+                >
+                  <MdDelete size={20} />
+                </button>
 
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredTasks.map(task => (
-              <div key={task.id} className="card shadow-xl bg-base-100 border">
-                <div className="card-body">
-                  <h2 className="card-title text-lg">{task.name}</h2>
-                  <p className="text-sm text-gray-600">{task.text}</p>
-                  <div className="mt-2 flex gap-2 items-center">
-                    <span className="badge badge-info">{task.department}</span>
-                    <select className="select select-sm ml-auto" value={task.status} onChange={e => updateTaskStatus(task.id, e.target.value)}>
-                      {statuses.map(s => <option key={s}>{s}</option>)}
-                    </select>
-                    <button className="btn btn-xs btn-error" onClick={() => removeTask(task.id)}>✕</button>
-                  </div>
+                <h2 className="card-title text-lg">{task.name}</h2>
+                <p className="text-sm text-gray-400">{task.text}</p>
+                <div className="mt-2 flex gap-2 items-center">
+                  <span className="badge bg-[#605dff] text-white">{task.department}</span>
+                  <span className={`badge ml-auto ${task.status === 'Сделано' ? 'badge-success' : task.status === 'На проверке' ? 'badge-info' : 'badge-warning'}`}>
+                    {task.status}
+                  </span>
+
+                  {task.status === 'На проверке' && (
+                    <>
+                      <button className="btn btn-xs btn-success ml-2" onClick={() => updateTaskStatus(task.id, 'Сделано')}>
+                        <MdCheck size={16} />
+                      </button>
+                      <button className="btn btn-xs btn-warning ml-1" onClick={() => updateTaskStatus(task.id, 'В процессе')}>
+                        <MdClose size={16} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
-      {tab === 'workers' && (
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <input className="input input-bordered w-full" placeholder="ФИО" value={newWorker.name} onChange={e => setNewWorker({ ...newWorker, name: e.target.value })} />
-            <input className="input input-bordered w-full" placeholder="Telegram" value={newWorker.telegram} onChange={e => setNewWorker({ ...newWorker, telegram: e.target.value })} />
-            <input className="input input-bordered w-full" placeholder="Отдел" value={newWorker.department} onChange={e => setNewWorker({ ...newWorker, department: e.target.value })} />
-            <button className="btn btn-secondary col-span-full" onClick={addWorker}>Добавить работника</button>
-          </div>
+      <div className={`${tab === 'workers' ? '' : 'hidden'}`}>
+        <button className="btn btn-primary mb-6 flex items-center gap-2" onClick={() => setShowWorkerModal(true)}>
+          <MdAdd size={20} /> Добавить работника
+        </button>
 
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {workers.map(w => (
-              <div key={w.id} className="card shadow-xl bg-base-100 border">
-                <div className="card-body">
-                  <h2 className="card-title text-lg">{w.name}</h2>
-                  <p className="text-sm text-gray-500">@{w.telegram}</p>
-                  <div className="badge badge-info mt-2">{w.department}</div>
-                </div>
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {workers.map(w => (
+            <div key={w.id} className="card shadow-xl border bg-base-100">
+              <div className="card-body">
+                <h2 className="card-title text-lg">{w.name}</h2>
+                <p className="text-sm text-gray-400">@{w.telegram}</p>
+                <div className="badge bg-[#605dff] mt-2">{w.department}</div>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Модалка задачи */}
+      <dialog className={`modal ${showTaskModal ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Новая задача</h3>
+          <input className="input input-bordered w-full mb-2" placeholder="Название" value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} />
+          <input className="input input-bordered w-full mb-2" placeholder="Текст" value={newTask.text} onChange={e => setNewTask({ ...newTask, text: e.target.value })} />
+          <input className="input input-bordered w-full mb-4" placeholder="Отдел" value={newTask.department} onChange={e => setNewTask({ ...newTask, department: e.target.value })} />
+          <div className="modal-action">
+            <button className="btn btn-outline" onClick={() => setShowTaskModal(false)}>Отмена</button>
+            <button className="btn btn-primary" onClick={addTask}>Сохранить</button>
           </div>
         </div>
-      )}
+      </dialog>
+
+      {/* Модалка работника */}
+      <dialog className={`modal ${showWorkerModal ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Новый работник</h3>
+          <input className="input input-bordered w-full mb-2" placeholder="ФИО" value={newWorker.name} onChange={e => setNewWorker({ ...newWorker, name: e.target.value })} />
+          <input className="input input-bordered w-full mb-2" placeholder="Telegram" value={newWorker.telegram} onChange={e => setNewWorker({ ...newWorker, telegram: e.target.value })} />
+          <input className="input input-bordered w-full mb-4" placeholder="Отдел" value={newWorker.department} onChange={e => setNewWorker({ ...newWorker, department: e.target.value })} />
+          <div className="modal-action">
+            <button className="btn btn-outline" onClick={() => setShowWorkerModal(false)}>Отмена</button>
+            <button className="btn btn-primary" onClick={addWorker}>Сохранить</button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
