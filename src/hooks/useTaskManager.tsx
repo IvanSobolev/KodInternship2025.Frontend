@@ -6,10 +6,46 @@ export const useTaskManager = () => {
   const [selectedTask, setSelectedTask] = useState(null);
 
   const [tasks, setTasks] = useState([
-    { id: 1, name: 'Проверить сигнализацию', text: 'Осмотреть панель в здании А', department: 'Охрана', assignee: 'Иван Петров', status: 'Нужно сделать' },
-    { id: 2, name: 'Установить камеры', text: 'Установка камеры в офисе 3', department: 'Монтаж', assignee: 'Анна Смирнова', status: 'В процессе' },
-    { id: 3, name: 'Проверка доступа', text: 'Тестирование системы доступа', department: 'ИТ', assignee: 'Дмитрий Волков', status: 'Сделано' },
-    { id: 4, name: 'Согласование чертежей', text: 'Отправить на утверждение', department: 'Проектировщики', assignee: 'Елена Кузнецова', status: 'На проверке' }
+    {
+      id: 1,
+      name: 'Проверить сигнализацию',
+      text: 'Осмотреть панель в здании А',
+      department: 'Охрана',
+      assignee: 'Иван Петров',
+      status: 'Нужно сделать',
+      createdAt: new Date('2025-01-10T10:00:00'),
+      updatedAt: null
+    },
+    {
+      id: 2,
+      name: 'Установить камеры',
+      text: 'Установка камеры в офисе 3',
+      department: 'Монтаж',
+      assignee: 'Анна Смирнова',
+      status: 'В процессе',
+      createdAt: new Date('2025-02-05T14:30:00'),
+      updatedAt: new Date('2025-02-06T09:15:00')
+    },
+    {
+      id: 3,
+      name: 'Проверка доступа',
+      text: 'Тестирование системы доступа',
+      department: 'ИТ',
+      assignee: 'Дмитрий Волков',
+      status: 'Сделано',
+      createdAt: new Date('2025-03-20T08:45:00'),
+      updatedAt: new Date('2025-03-22T16:00:00')
+    },
+    {
+      id: 4,
+      name: 'Согласование чертежей',
+      text: 'Отправить на утверждение',
+      department: 'Проектировщики',
+      assignee: 'Елена Кузнецова',
+      status: 'На проверке',
+      createdAt: new Date('2025-04-12T11:20:00'),
+      updatedAt: null
+    }
   ]);
 
   const [newTask, setNewTask] = useState({ name: '', text: '', department: '', assignee: '', status: 'Нужно сделать' });
@@ -17,10 +53,11 @@ export const useTaskManager = () => {
 
   const addTask = () => {
     if (!newTask.name || !newTask.department) return;
+    const now = new Date();
     if (editingTaskId) {
-      setTasks(tasks.map(t => 
-        t.id === editingTaskId 
-          ? { ...t, name: newTask.name, text: newTask.text, department: newTask.department, assignee: newTask.assignee }
+      setTasks(tasks.map(t =>
+        t.id === editingTaskId
+          ? { ...t, name: newTask.name, text: newTask.text, department: newTask.department, assignee: newTask.assignee, updatedAt: now }
           : t
       ));
       setEditingTaskId(null);
@@ -31,15 +68,20 @@ export const useTaskManager = () => {
         text: newTask.text,
         department: newTask.department,
         assignee: newTask.assignee,
-        status: 'В процессе'
+        status: 'Нужно сделать',
+        createdAt: now,
+        updatedAt: null
       }]);
     }
-    setNewTask({ name: '', text: '', department: '', assignee: '' });
+    setNewTask({ name: '', text: '', department: '', assignee: '', status: 'Нужно сделать' });
     setShowTaskModal(false);
   };
 
   const updateTaskStatus = (id, status) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
+    const now = new Date();
+    setTasks(tasks.map(t =>
+      t.id === id ? { ...t, status, updatedAt: now } : t
+    ));
   };
 
   const removeTask = (id) => {
