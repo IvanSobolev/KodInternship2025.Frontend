@@ -43,7 +43,7 @@ export default function App() {
             exit={{ opacity: 0, x: 30, scale: 0.98 }}
             transition={{
               duration: 0.4,
-              ease: [0.25, 0.1, 0.25, 1] 
+              ease: [0.25, 0.1, 0.25, 1]
             }}
           >
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
@@ -57,60 +57,52 @@ export default function App() {
                   onChange={e => setFilterDepartment(e.target.value)}
                 />
               </div>
-
               <button className="btn btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" onClick={() => { setNewTask({ name: '', text: '', department: '' }); setEditingTaskId(null); setShowTaskModal(true); }}>
                 <MdAdd size={20} /> <span className="hidden sm:inline">Добавить задачу</span>
               </button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col border rounded-lg overflow-hidden">
+              {/* Заголовки */}
+              <div className="flex bg-base-200 font-semibold px-4 py-2">
+                <div className="w-1/4">Название</div>
+                <div className="w-1/2">Описание</div>
+                <div className="w-1/4">Статус</div>
+                <div className="w-1/4 text-right">Действия</div>
+              </div>
+
               {filteredTasks.map(task => (
-                <div key={task.id} className="card shadow-xl border border-gray-200 dark:border-gray-700 bg-base-100">
-                  <div className="card-body relative">
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <button
-                        className="text-error cursor-pointer"
-                        onClick={() => removeTask(task.id)}
-                        aria-label="Удалить задачу"
-                      >
-                        <MdDelete size={20} />
+                <div key={task.id} className="flex items-center border-t px-4 py-3 hover:bg-base-100 transition">
+                  <div className="w-1/4">{task.name}</div>
+                  <div className="w-1/2 text-sm text-gray-500">{task.text}</div>
+                  <div className="w-1/4">
+                    <span className={`badge ${task.status === 'Сделано' ? 'badge-success' : task.status === 'На проверке' ? 'badge-info' : 'badge-warning'}`}>
+                      {task.status}
+                    </span>
+                  </div>
+                  <div className="w-1/4 flex justify-end gap-2 items-center flex-wrap">
+                    {task.status === 'Нужно сделать' && (
+                      <button className="btn btn-xs btn-outline" onClick={() => {
+                        setNewTask({ name: task.name, text: task.text, department: task.department });
+                        setEditingTaskId(task.id);
+                        setShowTaskModal(true);
+                      }}>
+                        <RiPencilFill size={16} />
                       </button>
-                      {task.status === 'Нужно сделать' && (
-                        <button
-                          className="text-primary cursor-pointer"
-                          onClick={() => {
-                            setNewTask({ name: task.name, text: task.text, department: task.department });
-                            setEditingTaskId(task.id);
-                            setShowTaskModal(true);
-                          }}
-                          aria-label="Редактировать задачу"
-                        >
-                          <RiPencilFill size={20} />
+                    )}
+                    {task.status === 'На проверке' && (
+                      <>
+                        <button className="btn btn-xs btn-success" onClick={() => updateTaskStatus(task.id, 'Сделано')}>
+                          <MdCheck size={16} />
                         </button>
-                      )}
-                    </div>
-
-                    <h2 className="card-title text-lg">{task.name}</h2>
-                    <p className="text-sm text-gray-400">{task.text}</p>
-                    <div className="mt-2 flex gap-2 items-center">
-                      <span className="badge bg-[#605dff] text-white">{task.department}</span>
-                      <span className={`badge ml-auto ${task.status === 'Сделано' ? 'badge-success' : task.status === 'На проверке' ? 'badge-info' : 'badge-warning'}`}>
-                        {task.status}
-                        </span>
-
-
-
-                      {task.status === 'На проверке' && (
-                        <>
-                          <button className="btn btn-xs btn-success ml-2" onClick={() => updateTaskStatus(task.id, 'Сделано')} aria-label="Пометить как сделано">
-                            <MdCheck size={16} />
-                          </button>
-                          <button className="btn btn-xs btn-warning ml-1" onClick={() => updateTaskStatus(task.id, 'В процессе')} aria-label="Вернуть в процесс">
-                            <MdClose size={16} />
-                          </button>
-                        </>
-                      )}
-                    </div>
+                        <button className="btn btn-xs btn-warning" onClick={() => updateTaskStatus(task.id, 'В процессе')}>
+                          <MdClose size={16} />
+                        </button>
+                      </>
+                    )}
+                    <button className="btn btn-xs btn-error" onClick={() => removeTask(task.id)}>
+                      <MdDelete size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -144,6 +136,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
 
       <dialog className={`modal ${showTaskModal ? 'modal-open' : ''}`}>
         <div className="modal-box">
