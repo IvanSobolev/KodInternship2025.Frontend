@@ -24,7 +24,9 @@ export default function App() {
     filterDepartment,
     setFilterDepartment,
     editingTaskId,
-    setEditingTaskId
+    setEditingTaskId,
+    selectedTask,
+    setSelectedTask
   } = useTaskManager();
 
   return (
@@ -57,33 +59,42 @@ export default function App() {
                   onChange={e => setFilterDepartment(e.target.value)}
                 />
               </div>
-              <button className="btn btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" onClick={() => { setNewTask({ name: '', text: '', department: '' }); setEditingTaskId(null); setShowTaskModal(true); }}>
+              <button className="btn btn-primary flex items-center justify-center gap-2 w-full sm:w-auto" onClick={() => { setNewTask({ name: '', text: '', department: '', assignee: '' }); setEditingTaskId(null); setShowTaskModal(true); }}>
                 <MdAdd size={20} /> <span className="hidden sm:inline">Добавить задачу</span>
               </button>
             </div>
 
             <div className="flex flex-col border rounded-lg overflow-hidden">
-              {/* Заголовки */}
               <div className="flex bg-base-200 font-semibold px-4 py-2">
-                <div className="w-1/4">Название</div>
-                <div className="w-1/2">Описание</div>
-                <div className="w-1/4">Статус</div>
-                <div className="w-1/4 text-right">Действия</div>
+                <div className="w-5/12">ID / Название</div>
+                <div className="w-2/12">Отдел</div>
+                <div className="w-2/12">Исполнитель</div>
+                <div className="w-2/12">Статус</div>
+                <div className="w-2/12 text-right">Действия</div>
               </div>
 
               {filteredTasks.map(task => (
                 <div key={task.id} className="flex items-center border-t px-4 py-3 hover:bg-base-100 transition">
-                  <div className="w-1/4">{task.name}</div>
-                  <div className="w-1/2 text-sm text-gray-500">{task.text}</div>
-                  <div className="w-1/4">
+                  <div className="w-5/12">
+                    <span className="mr-2">{task.id}</span>
+                    <button 
+                      className="text-blue-500"
+                      onClick={() => setSelectedTask(task)}
+                    >
+                      {task.name}
+                    </button>
+                  </div>
+                  <div className="w-2/12">{task.department}</div>
+                  <div className="w-2/12">{task.assignee || '-'}</div>
+                  <div className="w-2/12">
                     <span className={`badge ${task.status === 'Сделано' ? 'badge-success' : task.status === 'На проверке' ? 'badge-info' : 'badge-warning'}`}>
                       {task.status}
                     </span>
                   </div>
-                  <div className="w-1/4 flex justify-end gap-2 items-center flex-wrap">
+                  <div className="w-2/12 flex justify-end gap-2 items-center flex-wrap">
                     {task.status === 'Нужно сделать' && (
                       <button className="btn btn-xs btn-outline" onClick={() => {
-                        setNewTask({ name: task.name, text: task.text, department: task.department });
+                        setNewTask({ name: task.name, text: task.text, department: task.department, assignee: task.assignee });
                         setEditingTaskId(task.id);
                         setShowTaskModal(true);
                       }}>
@@ -137,16 +148,64 @@ export default function App() {
         )}
       </AnimatePresence>
 
-
       <dialog className={`modal ${showTaskModal ? 'modal-open' : ''}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">{editingTaskId ? 'Редактировать задачу' : 'Новая задача'}</h3>
-          <input className="input input-bordered w-full mb-2" placeholder="Название" value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} />
-          <input className="input input-bordered w-full mb-2" placeholder="Текст" value={newTask.text} onChange={e => setNewTask({ ...newTask, text: e.target.value })} />
-          <input className="input input-bordered w-full mb-4" placeholder="Отдел" value={newTask.department} onChange={e => setNewTask({ ...newTask, department: e.target.value })} />
+          <input 
+            className="input input-bordered w-full mb-2" 
+            placeholder="Название" 
+            value={newTask.name} 
+            onChange={e => setNewTask({ ...newTask, name: e.target.value })} 
+          />
+          <textarea 
+            className="textarea textarea-bordered w-full mb-2" 
+            placeholder="Описание" 
+            value={newTask.text} 
+            onChange={e => setNewTask({ ...newTask, text: e.target.value })} 
+          />
+          <input 
+            className="input input-bordered w-full mb-2" 
+            placeholder="Отдел" 
+            value={newTask.department} 
+            onChange={e => setNewTask({ ...newTask, department: e.target.value })} 
+          />
+          <select 
+            className="select select-bordered w-full mb-4"
+            value={newTask.assignee || ''}
+            onChange={e => setNewTask({ ...newTask, assignee: e.target.value })}
+          >
+            <option value="">Выберите исполнителя</option>
+            {workers.map(worker => (
+              <option key={worker.id} value={worker.name}>{worker.name}</option>
+            ))}
+          </select>
           <div className="modal-action">
-            <button className="btn btn-outline" onClick={() => { setShowTaskModal(false); setEditingTaskId(null); setNewTask({ name: '', text: '', department: '' }); }}>Отмена</button>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => { 
+                setShowTaskModal(false); 
+                setEditingTaskId(null); 
+                setNewTask({ name: '', text: '', department: '', assignee: '' }); 
+              }}
+            >
+              Отмена
+            </button>
             <button className="btn btn-primary" onClick={addTask}>Сохранить</button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog className={`modal ${selectedTask ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">{selectedTask?.name}</h3>
+          <p className="mb-4">{selectedTask?.text}</p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-outline" 
+              onClick={() => setSelectedTask(null)}
+            >
+              Закрыть
+            </button>
           </div>
         </div>
       </dialog>
@@ -154,9 +213,24 @@ export default function App() {
       <dialog className={`modal ${showWorkerModal ? 'modal-open' : ''}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Новый работник</h3>
-          <input className="input input-bordered w-full mb-2" placeholder="ФИО" value={newWorker.name} onChange={e => setNewWorker({ ...newWorker, name: e.target.value })} />
-          <input className="input input-bordered w-full mb-2" placeholder="Telegram" value={newWorker.telegram} onChange={e => setNewWorker({ ...newWorker, telegram: e.target.value })} />
-          <input className="input input-bordered w-full mb-4" placeholder="Отдел" value={newWorker.department} onChange={e => setNewWorker({ ...newWorker, department: e.target.value })} />
+          <input 
+            className="input input-bordered w-full mb-2" 
+            placeholder="ФИО" 
+            value={newWorker.name} 
+            onChange={e => setNewWorker({ ...newWorker, name: e.target.value })} 
+          />
+          <input 
+            className="input input-bordered w-full mb-2" 
+            placeholder="Telegram" 
+            value={newWorker.telegram} 
+            onChange={e => setNewWorker({ ...newWorker, telegram: e.target.value })} 
+          />
+          <input 
+            className="input input-bordered w-full mb-4" 
+            placeholder="Отдел" 
+            value={newWorker.department} 
+            onChange={e => setNewWorker({ ...newWorker, department: e.target.value })} 
+          />
           <div className="modal-action">
             <button className="btn btn-outline" onClick={() => setShowWorkerModal(false)}>Отмена</button>
             <button className="btn btn-primary" onClick={addWorker}>Сохранить</button>
