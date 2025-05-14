@@ -1,133 +1,271 @@
-import { useState } from 'react';
-import type { Task, Worker, TaskStatus, TabType, NewTask, NewWorker } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import type { 
+  Task, 
+  Worker, 
+  TabType, 
+  NewTask, 
+  NewWorker, 
+  UpdateTask, 
+  ProjectTaskFilterDto, 
+  WorkersFilterDto 
+} from '../types';
+import { TaskStatus, Department, DepartmentLabels } from '../types';
+import { taskApi, workerApi } from '../api/taskApi';
 
 export const useTaskManager = () => {
   const [tab, setTab] = useState<TabType>('tasks');
-  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingWorkerId, setEditingWorkerId] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      name: 'Проверить сигнализацию',
-      text: 'Осмотреть панель в здании А',
-      department: 'Охрана',
-      assignee: 'Иван Петров',
-      status: 'Нужно сделать',
-      createdAt: new Date('2025-01-10T10:00:00'),
-      updatedAt: null
-    },
-    {
-      id: 2,
-      name: 'Установить камеры',
-      text: 'Установка камеры в офисе 3',
-      department: 'Монтаж',
-      assignee: 'Анна Смирнова',
-      status: 'В процессе',
-      createdAt: new Date('2025-02-05T14:30:00'),
-      updatedAt: new Date('2025-02-06T09:15:00')
-    },
-    {
-      id: 3,
-      name: 'Проверка доступа',
-      text: 'Тестирование системы доступа',
-      department: 'ИТ',
-      assignee: 'Дмитрий Волков',
-      status: 'Сделано',
-      createdAt: new Date('2025-03-20T08:45:00'),
-      updatedAt: new Date('2025-03-22T16:00:00')
-    },
-    {
-      id: 4,
-      name: 'Согласование чертежей',
-      text: 'Отправить на утверждение',
-      department: 'Проектировщики',
-      assignee: 'Елена Кузнецова',
-      status: 'На проверке',
-      createdAt: new Date('2025-04-12T11:20:00'),
-      updatedAt: null
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+
+  // Функция для загрузки задач
+  const loadTasks = useCallback(async (filters?: ProjectTaskFilterDto) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const tasksData = await taskApi.getTasks(filters);
+      setTasks(tasksData);
+    } catch (err) {
+      setError('Ошибка при загрузке задач с сервера.');
+      console.error('Ошибка загрузки задач:', err);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  }, []);
+
+  // Функция для загрузки работников
+  const loadWorkers = useCallback(async (filters?: WorkersFilterDto) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const workersData = await workerApi.getWorkers(filters);
+      setWorkers(workersData);
+    } catch (err) {
+      setError('Ошибка при загрузке работников с сервера.');
+      console.error('Ошибка загрузки работников:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Загрузка данных при первом рендере
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        if (tab === 'tasks') {
+          await loadTasks();
+        } else {
+          await loadWorkers();
+        }
+      } catch (err) {
+        setError('Ошибка при загрузке данных с сервера.');
+        console.error('Ошибка загрузки данных:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
+
+  // Загрузка данных при переключении вкладок
+  useEffect(() => {
+    const fetchDataForTab = async () => {
+      if (tab === 'tasks') {
+        await loadTasks();
+      } else {
+        await loadWorkers();
+      }
+    };
+
+    fetchDataForTab();
+  }, [tab, loadTasks, loadWorkers]);
 
   const [newTask, setNewTask] = useState<NewTask>({ 
-    name: '', 
+    title: '', 
     text: '', 
-    department: '', 
-    assignee: '', 
-    status: 'Нужно сделать' 
+    department: Department.Empty
   });
   const [showTaskModal, setShowTaskModal] = useState(false);
 
-  const addTask = () => {
-    if (!newTask.name || !newTask.department) return;
+  const addTask = async () => {
+    if (!newTask.title || !newTask.text) return;
     
-    const now = new Date();
-    if (editingTaskId) {
-      setTasks(tasks.map(t =>
-        t.id === editingTaskId
-          ? { 
-              ...t, 
-              name: newTask.name, 
-              text: newTask.text, 
-              department: newTask.department, 
-              assignee: newTask.assignee, 
-              updatedAt: now 
-            }
-          : t
-      ));
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (editingTaskId) {
+        const updateTaskData: UpdateTask = {
+          id: editingTaskId,
+          title: newTask.title,
+          text: newTask.text,
+          department: newTask.department
+        };
+        
+        console.log('Обновление задачи:', updateTaskData);
+        const updatedTask = await taskApi.updateTask(updateTaskData);
+        console.log('Задача успешно обновлена:', updatedTask);
+        setTasks(tasks.map(t => t.id === editingTaskId ? updatedTask : t));
+      } else {
+        const createdTask = await taskApi.createTask(newTask);
+        setTasks([...tasks, createdTask]);
+      }
+      
       setEditingTaskId(null);
-    } else {
-      setTasks([...tasks, {
-        id: Date.now(),
-        name: newTask.name,
-        text: newTask.text,
-        department: newTask.department,
-        assignee: newTask.assignee,
-        status: 'Нужно сделать',
-        createdAt: now,
-        updatedAt: null
-      }]);
+      setNewTask({ title: '', text: '', department: Department.Empty });
+      setShowTaskModal(false);
+    } catch (err) {
+      console.error('Ошибка при сохранении задачи:', err);
+      setError('Ошибка при сохранении задачи');
+    } finally {
+      setIsLoading(false);
     }
-    setNewTask({ name: '', text: '', department: '', assignee: '', status: 'Нужно сделать' });
-    setShowTaskModal(false);
   };
 
-  const updateTaskStatus = (id: number, status: TaskStatus) => {
-    const now = new Date();
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, status, updatedAt: now } : t
-    ));
+  const updateTaskStatus = async (id: string, status: TaskStatus) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // В зависимости от статуса используем разные API
+      if (status === TaskStatus.InProgress) {
+        await taskApi.cancelReview(id);
+      } else if (status === TaskStatus.OnReview) {
+        await taskApi.completeTask(id);
+      } else if (status === TaskStatus.Done) {
+        await taskApi.finishTask(id);
+      }
+      
+      // Обновляем состояние в интерфейсе
+      await loadTasks();
+    } catch (err) {
+      console.error('Ошибка при обновлении статуса задачи:', err);
+      setError('Ошибка при обновлении статуса задачи');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const removeTask = (id: number) => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const removeTask = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Удаление задачи с ID:', id);
+      await taskApi.deleteTask(id);
+      setTasks(tasks.filter(t => t.id !== id));
+    } catch (err) {
+      console.error('Ошибка при удалении задачи:', err);
+      setError('Ошибка при удалении задачи');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const [workers, setWorkers] = useState<Worker[]>([
-    { id: 1, name: 'Иван Петров', telegram: 'ivan_fire', department: 'Охрана' },
-    { id: 2, name: 'Анна Смирнова', telegram: 'smirnova_cam', department: 'Монтаж' },
-    { id: 3, name: 'Дмитрий Волков', telegram: 'volkov_it', department: 'ИТ' },
-    { id: 4, name: 'Елена Кузнецова', telegram: 'kuzn_arch', department: 'Проектировщики' }
-  ]);
-
-  const [newWorker, setNewWorker] = useState<NewWorker>({ name: '', telegram: '', department: '' });
+  const [newWorker, setNewWorker] = useState<NewWorker>({ 
+    telegramId: 0, 
+    fullName: '', 
+    telegramUsername: '', 
+    department: Department.Empty 
+  });
   const [showWorkerModal, setShowWorkerModal] = useState(false);
 
-  const addWorker = () => {
-    if (!newWorker.name || !newWorker.department) return;
+  const addWorker = async () => {
+    if (!newWorker.fullName || (!editingWorkerId && (!newWorker.telegramUsername || !newWorker.telegramId))) return;
     
-    setWorkers([...workers, { ...newWorker, id: Date.now() }]);
-    setNewWorker({ name: '', telegram: '', department: '' });
-    setShowWorkerModal(false);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (editingWorkerId) {
+        // Находим текущего работника, чтобы сохранить его telegramUsername
+        const currentWorker = workers.find(w => w.telegramId === editingWorkerId);
+        
+        // Обновляем только имя и отдел работника, сохраняя telegramUsername
+        const workerToUpdate = {
+          ...newWorker,
+          telegramId: editingWorkerId,
+          telegramUsername: currentWorker?.telegramUsername || newWorker.telegramUsername
+        };
+        
+        console.log('Обновление работника:', workerToUpdate);
+        const updatedWorker = await workerApi.updateWorker(workerToUpdate);
+        console.log('Работник успешно обновлен:', updatedWorker);
+        setWorkers(workers.map(w => w.telegramId === editingWorkerId ? updatedWorker : w));
+        setEditingWorkerId(null);
+      } else {
+        const createdWorker = await workerApi.createWorker(newWorker);
+        setWorkers([...workers, createdWorker]);
+      }
+      
+      setNewWorker({ telegramId: 0, fullName: '', telegramUsername: '', department: Department.Empty });
+      setShowWorkerModal(false);
+    } catch (err) {
+      console.error('Ошибка при сохранении работника:', err);
+      setError('Ошибка при сохранении работника');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const [filterStatus, setFilterStatus] = useState<TaskStatus | ''>('');
+  const [filterStatus, setFilterStatus] = useState<TaskStatus | null>(null);
   const [filterDepartment, setFilterDepartment] = useState('');
 
-  const filteredTasks = tasks.filter(task =>
-    (filterStatus ? task.status === filterStatus : true) &&
-    (filterDepartment ? task.department.toLowerCase().includes(filterDepartment.toLowerCase()) : true)
-  );
+  // Загрузка задач с учетом фильтров
+  const loadFilteredTasks = useCallback(async () => {
+    const filterParams: ProjectTaskFilterDto = {};
+    
+    if (filterStatus !== null) {
+      filterParams.status = filterStatus;
+    }
+    
+    if (filterDepartment) {
+      // Находим отдел по точному названию из DepartmentLabels
+      const departmentEntry = Object.entries(DepartmentLabels).find(
+        ([_, label]) => label === filterDepartment
+      );
+      
+      if (departmentEntry) {
+        filterParams.department = Number(departmentEntry[0]) as Department;
+      }
+    }
+    
+    console.log('Применяемые фильтры:', filterParams);
+    await loadTasks(filterParams);
+  }, [filterStatus, filterDepartment, loadTasks]);
+
+  // Применяем фильтрацию при изменении параметров фильтра
+  useEffect(() => {
+    if (tab === 'tasks') {
+      loadFilteredTasks();
+    }
+  }, [filterStatus, filterDepartment, tab, loadFilteredTasks]);
+
+  // Фильтрация на клиенте (используется пока не пришли новые данные с сервера)
+  const filteredTasks = tasks.filter(task => {
+    const statusMatch = filterStatus === null || task.status === filterStatus;
+    
+    // Если фильтр отдела не задан, показываем все задачи
+    if (!filterDepartment) {
+      return statusMatch;
+    }
+    
+    // Получаем название отдела из задачи
+    const taskDepartmentName = DepartmentLabels[task.department as Department];
+    
+    // Сравниваем точное совпадение с выбранным фильтром
+    const departmentMatch = taskDepartmentName === filterDepartment;
+    
+    return statusMatch && departmentMatch;
+  });
 
   return {
     tab,
@@ -153,7 +291,13 @@ export const useTaskManager = () => {
     filteredTasks,
     editingTaskId,
     setEditingTaskId,
+    editingWorkerId,
+    setEditingWorkerId,
     selectedTask,
-    setSelectedTask
+    setSelectedTask,
+    isLoading,
+    error,
+    loadTasks,
+    loadWorkers
   };
 };
