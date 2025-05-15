@@ -1,5 +1,5 @@
 import type { TabType } from '../types';
-import { MdTask, MdPeople } from 'react-icons/md';
+import { MdTask, MdPeople, MdBarChart } from 'react-icons/md';
 
 interface AppTabsProps {
   tab: TabType;
@@ -34,6 +34,18 @@ export const AppTabs = ({ tab, setTab }: AppTabsProps) => {
         >
           <MdPeople className={`text-xl ${tab === 'workers' ? 'animate-pulse' : ''}`} />
           <span className="font-medium">Работники</span>
+        </button>
+        <button
+          role="tab"
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+            tab === 'statistics' 
+              ? 'bg-primary text-primary-content shadow-lg' 
+              : 'bg-base-200/50 backdrop-blur-sm hover:bg-base-200'
+          }`}
+          onClick={() => setTab('statistics')}
+        >
+          <MdBarChart className={`text-xl ${tab === 'statistics' ? 'animate-pulse' : ''}`} />
+          <span className="font-medium">Статистика</span>
         </button>
       </div>
       <div className="h-px bg-gradient-to-r from-transparent via-base-300 to-transparent w-full"></div>

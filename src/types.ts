@@ -74,7 +74,7 @@ export interface WorkersFilterDto {
 }
 
 // Типы для форм
-export type TabType = 'tasks' | 'workers';
+export type TabType = 'tasks' | 'workers' | 'statistics';
 
 // DTO для создания новой задачи
 export interface NewTask {
