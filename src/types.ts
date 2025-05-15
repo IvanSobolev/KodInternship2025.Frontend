@@ -44,10 +44,11 @@ export const WorkerStatusLabels: Record<WorkerStatus, string> = {
 export interface Task {
   id: string;
   title: string;
-  text: string;
+  text: string;             
   status: TaskStatus;
   department: Department;
   assignedWorkerId: number | null;
+  assignedWorkerName?: string;
   createdAt: Date;
   updatedAt: Date;
 }

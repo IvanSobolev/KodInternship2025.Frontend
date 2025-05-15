@@ -1,17 +1,30 @@
 import { format, isEqual } from 'date-fns';
-import type { Task } from '../types';
+import type { Task, Worker } from '../types';
 import { DepartmentLabels, TaskStatusLabels } from '../types';
 
 interface TaskDetailsModalProps {
   task: Task | null;
   onClose: () => void;
+  workers?: Worker[];
 }
 
-export const TaskDetailsModal = ({ task, onClose }: TaskDetailsModalProps) => {
+export const TaskDetailsModal = ({ task, onClose, workers = [] }: TaskDetailsModalProps) => {
   if (!task) return null;
   
   // Проверяем, отличается ли дата обновления от даты создания
   const isEdited = task.updatedAt && !isEqual(new Date(task.createdAt), new Date(task.updatedAt));
+  
+  // Функция для получения ФИО работника по его ID
+  const getWorkerName = (task: Task): string => {
+    if (!task.assignedWorkerId) return "Не назначен";
+    
+    // Если есть имя в самой задаче, используем его
+    if (task.assignedWorkerName) return task.assignedWorkerName;
+    
+    // Иначе ищем среди списка работников
+    const worker = workers.find(w => w.telegramId === task.assignedWorkerId);
+    return worker ? worker.fullName : "Не найден";
+  };
   
   return (
     <dialog className={`modal ${task ? 'modal-open' : ''}`}>
@@ -21,7 +34,7 @@ export const TaskDetailsModal = ({ task, onClose }: TaskDetailsModalProps) => {
         <div className="mb-4">
           <p className="text-sm mb-1"><span className="font-semibold">Отдел:</span> {DepartmentLabels[task.department]}</p>
           <p className="text-sm mb-1"><span className="font-semibold">Статус:</span> {TaskStatusLabels[task.status]}</p>
-          <p className="text-sm mb-1"><span className="font-semibold">Исполнитель:</span> {task.assignedWorkerId ? `ID: ${task.assignedWorkerId}` : 'Не назначен'}</p>
+          <p className="text-sm mb-1"><span className="font-semibold">Исполнитель:</span> {getWorkerName(task)}</p>
         </div>
         <div className="text-sm text-gray-500 mb-4">
           {isEdited ? (
@@ -41,4 +54,4 @@ export const TaskDetailsModal = ({ task, onClose }: TaskDetailsModalProps) => {
       </div>
     </dialog>
   );
-}; 
+};

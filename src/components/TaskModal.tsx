@@ -18,7 +18,6 @@ export const TaskModal = ({
   newTask,
   setNewTask,
   editTask,
-  workers,
   onSave,
   onClose
 }: TaskModalProps) => {
@@ -77,25 +76,7 @@ export const TaskModal = ({
               <MdCategory /> Отдел
             </span>
           </label>
-          <select
-            className="select select-bordered w-full focus:select-primary rounded-xl bg-base-200/50 backdrop-blur-sm"
-            value={newTask.department}
-            onChange={e => {
-              console.log('Выбран отдел:', e.target.value, 'Название:', DepartmentLabels[Number(e.target.value) as Department]);
-              setNewTask({ ...newTask, department: Number(e.target.value) as Department });
-            }}
-          >
-            <option disabled value="">Выберите отдел</option>
-            {Object.values(Department)
-              .filter(v => typeof v === 'number' && v !== Department.Empty)
-              .map(dept => {
-                console.log('Отдел в списке:', dept, 'Название:', DepartmentLabels[dept as Department]);
-                return (
-                  <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>
-                );
-              })
-            }
-          </select>
+                    <select            className="select select-bordered w-full focus:select-primary rounded-xl bg-base-200/50 backdrop-blur-sm"            value={newTask.department}            onChange={e => {              console.log('Выбран отдел:', e.target.value, 'Название:', DepartmentLabels[Number(e.target.value) as Department]);              setNewTask({ ...newTask, department: Number(e.target.value) as Department });            }}          >            <option disabled value="">Выберите отдел</option>            {Object.values(Department)              .filter(v => typeof v === 'number')              .map(dept => {                console.log('Отдел в списке:', dept, 'Название:', DepartmentLabels[dept as Department]);                return (                  <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>                );              })            }          </select>
         </div>
 
         {editTask && (

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   BarChart, Bar,
   PieChart, Pie, Cell,
-  LineChart, Line,
   XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -28,14 +27,15 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
   
   // Рассчитываем статистику по времени выполнения задач
   useEffect(() => {
-    // Имитация расчета среднего времени выполнения задач
-    // В реальном приложении здесь будет логика расчета на основе фактических данных
     const calculateWorkerStats = () => {
       const filteredWorkers = selectedDepartment !== null 
         ? workers.filter(w => w.department === selectedDepartment)
         : workers;
       
-      return filteredWorkers.map(worker => {
+      // Фильтруем также работников, у которых отдел "Пусто" (Department.Empty)
+      const validWorkers = filteredWorkers.filter(w => w.department !== Department.Empty);
+      
+      return validWorkers.map(worker => {
         const workerTasks = tasks.filter(task => task.assignedWorkerId === worker.telegramId);
         
         // Имитация расчета среднего времени (в реальном приложении будет основано на реальных данных)
@@ -55,11 +55,12 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
   }, [tasks, workers, selectedDepartment]);
 
   // Данные для графика распределения задач по отделам
+  // Исключаем задачи с отделом Empty
   const departmentTasksData = [
     { name: DepartmentLabels[Department.Frontend], value: tasks.filter(t => t.department === Department.Frontend).length },
     { name: DepartmentLabels[Department.Backend], value: tasks.filter(t => t.department === Department.Backend).length },
     { name: DepartmentLabels[Department.UiUx], value: tasks.filter(t => t.department === Department.UiUx).length },
-  ];
+  ].filter(item => item.name !== 'Пусто'); // Исключаем "Пусто" из графика
 
   // Цвета для графиков
   const COLORS = ['#0088FE', '#FF8042', '#00C49F', '#FFBB28'];
@@ -130,9 +131,7 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
                     dataKey="value"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
-                    {departmentTasksData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                                      {departmentTasksData.map((_, index) => (                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />                    ))}
                   </Pie>
                   <Tooltip formatter={(value) => [`${value} задач`, 'Количество']} />
                   <Legend />
@@ -159,9 +158,7 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
                     dataKey="value"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
-                    {taskStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                                        {taskStatusData.map((_, index) => (                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />                    ))}
                   </Pie>
                   <Tooltip formatter={(value) => [`${value} задач`, 'Количество']} />
                   <Legend />

@@ -4,7 +4,6 @@ import { Department, DepartmentLabels, WorkerStatus, WorkerStatusLabels } from '
 import { motion } from 'framer-motion';
 import { 
   MdError, 
-  MdPerson, 
   MdCategory, 
   MdOutlineBadge, 
   MdCheckCircle, 
@@ -45,20 +44,6 @@ export const WorkerList = ({
       return DepartmentLabels[department as Department] || String(department);
     }
     return String(department);
-  };
-
-  // Функция для отображения статуса работника
-  const getStatusClassName = (status: WorkerStatus): string => {
-    switch (status) {
-      case WorkerStatus.Free:
-        return 'badge badge-success';
-      case WorkerStatus.Busy:
-        return 'badge badge-warning';
-      case WorkerStatus.Unavailable:
-        return 'badge badge-error';
-      default:
-        return 'badge';
-    }
   };
 
   // Функция для отображения иконки статуса работника
@@ -175,7 +160,6 @@ export const WorkerList = ({
                   <th className="bg-opacity-80 rounded-tl-xl">#</th>
                   <th className="bg-opacity-80">TG ID</th>
                   <th className="bg-opacity-80">ФИО</th>
-                  <th className="bg-opacity-80">Telegram</th>
                   <th className="bg-opacity-80">Отдел</th>
                   <th className="text-center bg-opacity-80">Статус</th>
                   <th className="text-right bg-opacity-80 rounded-tr-xl">Действия</th>
@@ -184,7 +168,7 @@ export const WorkerList = ({
               <tbody>
                 {filteredWorkers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-base-content/70">
+                    <td colSpan={6} className="text-center py-8 text-base-content/70">
                       <div className="flex flex-col items-center justify-center py-8">
                         <MdSearch className="text-4xl mb-2 opacity-50" />
                         <p>Нет работников для отображения</p>
@@ -197,7 +181,6 @@ export const WorkerList = ({
                       <td className="font-medium">{index + 1}</td>
                       <td>{worker.telegramId}</td>
                       <td className="font-medium">{worker.fullName}</td>
-                      <td className="text-primary">@{worker.telegramUsername}</td>
                       <td>
                         <div className="badge badge-outline backdrop-blur-sm">{getDepartmentName(worker.department)}</div>
                       </td>
@@ -251,21 +234,14 @@ export const WorkerList = ({
                         </button>
                       </div>
                     </div>
-                    
-                    <div className="h-px bg-gradient-to-r from-transparent via-base-300/50 to-transparent w-full my-3"></div>
-                    
-                    <div className="mt-2 text-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MdOutlineBadge className="text-base-content/70" />
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <MdOutlineBadge className="text-primary" />
                         <span>ID: {worker.telegramId}</span>
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <MdPerson className="text-base-content/70" />
-                        <span className="text-primary">@{worker.telegramUsername}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MdCategory className="text-base-content/70" />
-                        <div className="badge badge-outline badge-sm backdrop-blur-sm">{getDepartmentName(worker.department)}</div>
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <MdCategory className="text-primary" />
+                        <span>{getDepartmentName(worker.department)}</span>
                       </div>
                     </div>
                   </div>

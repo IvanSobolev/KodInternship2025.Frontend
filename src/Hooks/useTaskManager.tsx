@@ -11,6 +11,8 @@ import type {
 } from '../types';
 import { TaskStatus, Department, DepartmentLabels } from '../types';
 import { taskApi, workerApi } from '../api/taskApi';
+import { signalRService } from '../api/websocket';
+import type { ToastType } from '../components/Toast';
 
 export const useTaskManager = () => {
   const [tab, setTab] = useState<TabType>('tasks');
@@ -19,11 +21,29 @@ export const useTaskManager = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [tasks, setTasks] = useState<Task[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  
+  // Состояние для уведомлений
+  const [toasts, setToasts] = useState<{id: string, message: string, type: ToastType}[]>([]);
+  
+  // Moved the filter state declarations here before they are used
+  const [filterStatus, setFilterStatus] = useState<TaskStatus | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState('');
+  
+  // Функция для добавления уведомления
+  const addToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+    return id;
+  }, []);
+  
+  // Функция для удаления уведомления
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
 
-  // Функция для загрузки задач
+  // Функция для загрузки задач - moved before handleTaskUpdate
   const loadTasks = useCallback(async (filters?: ProjectTaskFilterDto) => {
     setIsLoading(true);
     setError(null);
@@ -52,6 +72,153 @@ export const useTaskManager = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Обработчик для новых задач
+  const handleNewTaskCreated = useCallback((task: Task) => {
+    // Создаем уведомление о событии
+    const message = `Создана новая задача: ${task.title}`;
+    addToast(message, 'info');
+    
+    // Обновляем список задач если мы на вкладке задач
+    if (tab === 'tasks') {
+      // Обновляем данные с задержкой, чтобы изменения успели примениться на сервере
+      setTimeout(() => {
+        const filterParams: ProjectTaskFilterDto = {};
+        
+        if (filterStatus !== null) {
+          filterParams.status = filterStatus;
+        }
+        
+        if (filterDepartment) {
+          // Находим отдел по точному названию из DepartmentLabels
+          const departmentEntry = Object.entries(DepartmentLabels).find(
+            ([_, label]) => label === filterDepartment
+          );
+          
+          if (departmentEntry) {
+            filterParams.department = Number(departmentEntry[0]) as Department;
+          }
+        }
+        
+        loadTasks(filterParams);
+      }, 300);
+    }
+  }, [addToast, tab, filterStatus, filterDepartment, loadTasks]);
+
+  // Обработчик для принятых задач
+  const handleTaskAccepted = useCallback((task: Task, workerId: number) => {
+    // Находим имя работника
+    const workerName = workers.find(w => w.telegramId === workerId)?.fullName || 'сотрудник';
+    
+    // Создаем уведомление
+    const message = `Задача "${task.title}" принята работником ${workerName}`;
+    addToast(message, 'success');
+    
+    // Обновляем список задач если мы на вкладке задач
+    if (tab === 'tasks') {
+      setTimeout(() => {
+        const filterParams: ProjectTaskFilterDto = {};
+        
+        if (filterStatus !== null) {
+          filterParams.status = filterStatus;
+        }
+        
+        if (filterDepartment) {
+          // Находим отдел по точному названию из DepartmentLabels
+          const departmentEntry = Object.entries(DepartmentLabels).find(
+            ([_, label]) => label === filterDepartment
+          );
+          
+          if (departmentEntry) {
+            filterParams.department = Number(departmentEntry[0]) as Department;
+          }
+        }
+        
+        loadTasks(filterParams);
+      }, 300);
+    }
+  }, [workers, addToast, tab, filterStatus, filterDepartment, loadTasks]);
+
+  // Обработчик для изменения статуса задачи
+  const handleTaskStatusChanged = useCallback((data: { taskId: string; newStatus: string; assignedWorkerId?: number }) => {
+    // Находим задачу в текущем состоянии
+    const task = tasks.find(t => t.id === data.taskId);
+    if (!task) return;
+    
+    // Находим имя работника
+    const workerName = data.assignedWorkerId 
+      ? (workers.find(w => w.telegramId === data.assignedWorkerId)?.fullName || 'сотрудник')
+      : 'назначенный работник';
+    
+    // Формируем сообщение в зависимости от статуса
+    let message = '';
+    let toastType: ToastType = 'info';
+    
+    switch (data.newStatus) {
+      case 'PendingReview':
+        message = `Задача "${task.title}" выполнена и ожидает проверки`;
+        toastType = 'success';
+        break;
+      case 'InProgress':
+        message = `Задача "${task.title}" назначена на ${workerName}`;
+        toastType = 'success';
+        break;
+      case 'Completed':
+        message = `Задача "${task.title}" проверена и принята`;
+        toastType = 'success';
+        break;
+      default:
+        message = `Статус задачи "${task.title}" изменен на ${data.newStatus}`;
+        toastType = 'info';
+    }
+    
+    // Добавляем уведомление
+    addToast(message, toastType);
+    
+    // Обновляем список задач если мы на вкладке задач
+    if (tab === 'tasks') {
+      // Обновляем данные с задержкой, чтобы изменения успели примениться на сервере
+      setTimeout(() => {
+        const filterParams: ProjectTaskFilterDto = {};
+        
+        if (filterStatus !== null) {
+          filterParams.status = filterStatus;
+        }
+        
+        if (filterDepartment) {
+          // Находим отдел по точному названию из DepartmentLabels
+          const departmentEntry = Object.entries(DepartmentLabels).find(
+            ([_, label]) => label === filterDepartment
+          );
+          
+          if (departmentEntry) {
+            filterParams.department = Number(departmentEntry[0]) as Department;
+          }
+        }
+        
+        loadTasks(filterParams);
+      }, 300);
+    }
+  }, [tasks, workers, addToast, tab, filterStatus, filterDepartment, loadTasks]);
+
+  // Инициализация SignalR соединения
+  useEffect(() => {
+    // Подключаемся к SignalR серверу
+    signalRService.connect();
+    
+    // Добавляем обработчики событий
+    signalRService.addNewTaskCreatedListener(handleNewTaskCreated);
+    signalRService.addTaskAcceptedListener(handleTaskAccepted);
+    signalRService.addTaskStatusChangedListener(handleTaskStatusChanged);
+    
+    // Отключаемся при размонтировании компонента
+    return () => {
+      signalRService.removeNewTaskCreatedListener(handleNewTaskCreated);
+      signalRService.removeTaskAcceptedListener(handleTaskAccepted);
+      signalRService.removeTaskStatusChangedListener(handleTaskStatusChanged);
+      signalRService.disconnect();
+    };
+  }, [handleNewTaskCreated, handleTaskAccepted, handleTaskStatusChanged]);
 
   // Загрузка данных при первом рендере
   useEffect(() => {
@@ -174,7 +341,7 @@ export const useTaskManager = () => {
     telegramId: 0, 
     fullName: '', 
     telegramUsername: '', 
-    department: Department.Empty 
+    department: Department.Frontend 
   });
   const [showWorkerModal, setShowWorkerModal] = useState(false);
 
@@ -206,7 +373,7 @@ export const useTaskManager = () => {
         setWorkers([...workers, createdWorker]);
       }
       
-      setNewWorker({ telegramId: 0, fullName: '', telegramUsername: '', department: Department.Empty });
+      setNewWorker({ telegramId: 0, fullName: '', telegramUsername: '', department: Department.Frontend });
       setShowWorkerModal(false);
     } catch (err) {
       console.error('Ошибка при сохранении работника:', err);
@@ -215,9 +382,6 @@ export const useTaskManager = () => {
       setIsLoading(false);
     }
   };
-
-  const [filterStatus, setFilterStatus] = useState<TaskStatus | null>(null);
-  const [filterDepartment, setFilterDepartment] = useState('');
 
   // Загрузка задач с учетом фильтров
   const loadFilteredTasks = useCallback(async () => {
@@ -298,6 +462,9 @@ export const useTaskManager = () => {
     isLoading,
     error,
     loadTasks,
-    loadWorkers
+    loadWorkers,
+    toasts,
+    addToast,
+    removeToast
   };
 };

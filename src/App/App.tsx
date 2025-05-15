@@ -7,9 +7,9 @@ import { TaskModal } from '../components/TaskModal';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { WorkerModal } from '../components/WorkerModal';
 import { Statistics } from '../components/Statistics';
+import { Toast, ToastContainer } from '../components/Toast';
 import type { Task, Worker } from "../types";
 import { Department } from "../types";
-import { MdDashboard, MdOutlineWavingHand } from 'react-icons/md';
 
 export default function App() {
   const {
@@ -41,7 +41,9 @@ export default function App() {
     setShowWorkerModal,
     addWorker,
     isLoading,
-    error
+    error,
+    toasts,
+    removeToast
   } = useTaskManager();
 
   const editTask = editingTaskId != null
@@ -88,11 +90,23 @@ export default function App() {
   const handleCloseWorkerModal = () => {
     setShowWorkerModal(false);
     setEditingWorkerId(null);
-    setNewWorker({ telegramId: 0, fullName: '', telegramUsername: '', department: Department.Empty });
+    setNewWorker({ telegramId: 0, fullName: '', telegramUsername: '', department: Department.Frontend });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-300 to-base-100">
+      {/* Контейнер для уведомлений */}
+      <ToastContainer>
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </ToastContainer>
+
       {/* Main Content */}
       <main className="container mx-auto py-8 px-6">
         <div className="bg-base-100/80 backdrop-blur-sm rounded-box shadow-xl border border-base-300/50">
@@ -115,6 +129,7 @@ export default function App() {
                     onViewTaskDetails={setSelectedTask}
                     isLoading={isLoading}
                     error={error}
+                    workers={workers}
                   />
                 )}
 
@@ -153,6 +168,7 @@ export default function App() {
       <TaskDetailsModal
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
+        workers={workers}
       />
 
       <WorkerModal

@@ -1,6 +1,7 @@
 import type { NewWorker, Worker } from '../types';
 import { Department, DepartmentLabels } from '../types';
 import { MdPerson, MdCategory, MdOutlineBadge, MdAlternateEmail, MdEdit, MdAdd } from 'react-icons/md';
+import { useEffect } from 'react';
 
 interface WorkerModalProps {
   isOpen: boolean;
@@ -19,6 +20,17 @@ export const WorkerModal = ({
   onSave,
   onClose
 }: WorkerModalProps) => {
+  // Устанавливаем Frontend по умолчанию при открытии модального окна
+  useEffect(() => {
+    if (isOpen && newWorker.department === Department.Empty) {
+      // Если отдел пустой, устанавливаем Frontend (независимо от того, редактируем или создаем)
+      setNewWorker({
+        ...newWorker,
+        department: Department.Frontend
+      });
+    }
+  }, [isOpen, newWorker, setNewWorker]);
+
   return (
     <dialog className={`modal backdrop-blur-sm ${isOpen ? 'modal-open' : ''}`}>
       <div className="modal-box bg-base-100/90 backdrop-blur-md shadow-2xl border border-base-300/30 rounded-2xl">
@@ -97,16 +109,25 @@ export const WorkerModal = ({
             className="select select-bordered w-full focus:select-primary rounded-xl bg-base-200/50 backdrop-blur-sm"
             value={newWorker.department}
             onChange={e => {
-              console.log('Выбран отдел:', e.target.value, 'Название:', DepartmentLabels[Number(e.target.value) as Department]);
-              setNewWorker({ ...newWorker, department: Number(e.target.value) as Department });
+              // Явно преобразуем строку в число
+              const departmentValue = parseInt(e.target.value, 10);
+              console.log('Выбран отдел:', departmentValue, 'Название:', DepartmentLabels[departmentValue as Department]);
+              
+              // Обновляем состояние с числовым значением
+              setNewWorker({ 
+                ...newWorker, 
+                department: departmentValue as Department 
+              });
             }}
           >
-            <option disabled value="">Выберите отдел</option>
             {Object.values(Department)
               .filter(v => typeof v === 'number' && v !== Department.Empty)
-              .map(dept => (
-                <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>
-              ))
+              .map(dept => {
+                console.log('Отдел в списке:', dept, 'Название:', DepartmentLabels[dept as Department]);
+                return (
+                  <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>
+                );
+              })
             }
           </select>
         </div>
@@ -121,5 +142,5 @@ export const WorkerModal = ({
         </div>
       </div>
     </dialog>
-  );
+  ); 
 }; 

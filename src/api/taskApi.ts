@@ -1,4 +1,4 @@
-import type { Task, Worker, NewTask, NewWorker, UpdateTask, TaskStatus, Department, WorkerStatus, ProjectTaskFilterDto, WorkersFilterDto } from '../types';
+import type { Task, Worker, NewTask, NewWorker, UpdateTask, ProjectTaskFilterDto, WorkersFilterDto } from '../types';
 import api from './axios';
 
 // Функции для работы с задачами
@@ -6,11 +6,28 @@ export const taskApi = {
   async getTasks(filter?: ProjectTaskFilterDto): Promise<Task[]> {
     try {
       const { data } = await api.get('/ProjectTask', { params: filter });
-      return data.map((task: any) => ({
-        ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: new Date(task.updatedAt)
-      }));
+      
+      // Получаем всех работников для соотнесения их с задачами
+      const workersResponse = await api.get('/workers');
+      const workers = workersResponse.data;
+      
+      return data.map((task: any) => {
+        // Если есть assignedWorkerId, находим соответствующего работника
+        let assignedWorkerName = undefined;
+        if (task.assignedWorkerId) {
+          const worker = workers.find((w: Worker) => w.telegramId === task.assignedWorkerId);
+          if (worker) {
+            assignedWorkerName = worker.fullName;
+          }
+        }
+        
+        return {
+          ...task,
+          assignedWorkerName,
+          createdAt: new Date(task.createdAt),
+          updatedAt: new Date(task.updatedAt)
+        };
+      });
     } catch (error) {
       console.error('Ошибка при получении задач:', error);
       throw error;
@@ -21,8 +38,22 @@ export const taskApi = {
   async getTaskById(id: string): Promise<Task> {
     try {
       const { data } = await api.get(`/ProjectTask/${id}`);
+      
+      let assignedWorkerName = undefined;
+      if (data.assignedWorkerId) {
+        try {
+          const workerResponse = await api.get(`/workers/${data.assignedWorkerId}`);
+          if (workerResponse.data) {
+            assignedWorkerName = workerResponse.data.fullName;
+          }
+        } catch (workerError) {
+          console.error('Ошибка при получении данных работника:', workerError);
+        }
+      }
+      
       return {
         ...data,
+        assignedWorkerName,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt)
       };

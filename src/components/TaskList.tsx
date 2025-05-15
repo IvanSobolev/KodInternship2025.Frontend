@@ -19,7 +19,6 @@ import {
   MdFilterAlt
 } from 'react-icons/md';
 import { RiPencilFill } from 'react-icons/ri';
-import { useState } from 'react';
 
 interface TaskListProps {
   filteredTasks: Task[];
@@ -34,6 +33,7 @@ interface TaskListProps {
   onViewTaskDetails: (task: Task) => void;
   isLoading?: boolean;
   error?: string | null;
+  workers: any[]; // Добавляем доступ к списку работников
 }
 
 export const TaskList = ({
@@ -48,7 +48,8 @@ export const TaskList = ({
   onEditTask,
   onViewTaskDetails,
   isLoading = false,
-  error = null
+  error = null,
+  workers = []
 }: TaskListProps) => {
   const animationProps = {
     initial: { opacity: 0, x: -30, scale: 0.98 },
@@ -79,6 +80,18 @@ export const TaskList = ({
       default:
         return null;
     }
+  };
+
+  // Функция для получения ФИО работника по его ID
+  const getWorkerName = (task: Task): string => {
+    if (!task.assignedWorkerId) return "Не назначен";
+    
+    // Если есть имя в самой задаче, используем его
+    if (task.assignedWorkerName) return task.assignedWorkerName;
+    
+    // Иначе ищем среди списка работников
+    const worker = workers.find(w => w.telegramId === task.assignedWorkerId);
+    return worker ? worker.fullName : "Не найден";
   };
   
   return (
@@ -204,12 +217,11 @@ export const TaskList = ({
                       <td>
                         <div className="badge badge-outline backdrop-blur-sm">{getDepartmentName(task.department)}</div>
                       </td>
-                      <td>{task.assignedWorkerId ? 
+                      <td>
                         <div className="flex items-center gap-1">
                           <MdPerson className="text-base-content/70" />
-                          <span>ID: {task.assignedWorkerId}</span>
-                        </div> : 
-                        <span className="text-base-content/50">Не назначен</span>}
+                          <span>{getWorkerName(task)}</span>
+                        </div>
                       </td>
                       <td className="text-center">
                         <div className="tooltip" data-tip={TaskStatusLabels[task.status]}>
@@ -296,7 +308,7 @@ export const TaskList = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <MdPerson className="text-base-content/70" />
-                        <span>{task.assignedWorkerId ? `ID: ${task.assignedWorkerId}` : 'Не назначен'}</span>
+                        <span>{getWorkerName(task)}</span>
                       </div>
                     </div>
                     
