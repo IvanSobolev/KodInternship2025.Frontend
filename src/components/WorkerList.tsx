@@ -2,7 +2,19 @@ import { useState, useMemo } from 'react';
 import type { Worker } from '../types';
 import { Department, DepartmentLabels, WorkerStatus, WorkerStatusLabels } from '../types';
 import { motion } from 'framer-motion';
-import { MdError, MdPerson, MdCategory, MdOutlineBadge, MdCheckCircle, MdHourglassEmpty, MdCancel, MdFilterList } from 'react-icons/md';
+import { 
+  MdError, 
+  MdPerson, 
+  MdCategory, 
+  MdOutlineBadge, 
+  MdCheckCircle, 
+  MdHourglassEmpty, 
+  MdCancel, 
+  MdFilterList,
+  MdFilterAlt,
+  MdSearch,
+  MdPeople
+} from 'react-icons/md';
 import { RiPencilFill } from 'react-icons/ri';
 
 interface WorkerListProps {
@@ -93,86 +105,110 @@ export const WorkerList = ({
 
   return (
     <motion.div key="workers" {...animationProps}>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-xs">
-          <div className="relative">
-            <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
-            <select
-              className="select select-bordered w-full pl-10"
-              value={filterDepartment}
-              onChange={e => {
-                console.log('Выбран фильтр отдела:', e.target.value);
-                setFilterDepartment(e.target.value);
-              }}
-              disabled={isLoading}
-            >
-              <option value="">Все отделы</option>
-              {Object.entries(DepartmentLabels)
-                .filter(([deptId]) => Number(deptId) !== Department.Empty)
-                .map(([deptId, deptName]) => {
-                  console.log('Отдел в списке фильтров:', deptId, deptName);
-                  return (
-                    <option key={deptId} value={deptName}>
-                      {deptName}
-                    </option>
-                  );
-                })
-              }
-            </select>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-primary/20 backdrop-blur-sm">
+              <MdPeople className="text-2xl text-primary" />
+            </span>
+            Список работников
+          </h2>
+        </div>
+        
+        <div className="bg-base-200/70 backdrop-blur-sm p-5 rounded-xl shadow-md mb-8">
+          <div className="text-sm font-medium mb-3 flex items-center gap-2">
+            <MdFilterAlt className="text-primary" /> Фильтры
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <div className="relative">
+                <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+                <select
+                  className="select select-bordered w-full pl-10 rounded-xl bg-base-100/70 backdrop-blur-sm focus:bg-base-100"
+                  value={filterDepartment}
+                  onChange={e => {
+                    console.log('Выбран фильтр отдела:', e.target.value);
+                    setFilterDepartment(e.target.value);
+                  }}
+                  disabled={isLoading}
+                >
+                  <option value="">Все отделы</option>
+                  {Object.entries(DepartmentLabels)
+                    .filter(([deptId]) => Number(deptId) !== Department.Empty)
+                    .map(([deptId, deptName]) => {
+                      console.log('Отдел в списке фильтров:', deptId, deptName);
+                      return (
+                        <option key={deptId} value={deptName}>
+                          {deptName}
+                        </option>
+                      );
+                    })
+                  }
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-error mb-4">
-          <MdError className="shrink-0 h-6 w-6" />
-          <span>{error}</span>
+        <div className="alert alert-error shadow-lg mb-6 rounded-xl">
+          <div className="flex items-center">
+            <MdError className="shrink-0 h-6 w-6" />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <span className="loading loading-spinner loading-lg"></span>
+        <div className="flex flex-col justify-center items-center py-16 bg-base-200/70 backdrop-blur-sm rounded-xl">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/70">Загрузка данных...</p>
         </div>
       ) : (
         <>
           {/* Таблица для десктопов */}
-          <div className="hidden md:block border rounded-lg">
-            <table className="table w-full">
-              <thead className="bg-base-200">
+          <div className="hidden md:block rounded-xl overflow-hidden shadow-xl bg-base-100/80 backdrop-blur-sm border border-base-300/30">
+            <table className="table table-zebra w-full">
+              <thead className="bg-base-200/80 backdrop-blur-sm text-base-content">
                 <tr>
-                  <th>#</th>
-                  <th>TG ID</th>
-                  <th>ФИО</th>
-                  <th>Telegram</th>
-                  <th>Отдел</th>
-                  <th className="text-center">Статус</th>
-                  <th className="text-right">Действия</th>
+                  <th className="bg-opacity-80 rounded-tl-xl">#</th>
+                  <th className="bg-opacity-80">TG ID</th>
+                  <th className="bg-opacity-80">ФИО</th>
+                  <th className="bg-opacity-80">Telegram</th>
+                  <th className="bg-opacity-80">Отдел</th>
+                  <th className="text-center bg-opacity-80">Статус</th>
+                  <th className="text-right bg-opacity-80 rounded-tr-xl">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredWorkers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-8">
-                      Нет работников для отображения
+                    <td colSpan={7} className="text-center py-8 text-base-content/70">
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <MdSearch className="text-4xl mb-2 opacity-50" />
+                        <p>Нет работников для отображения</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   filteredWorkers.map((worker, index) => (
-                    <tr key={worker.telegramId} className="hover:bg-base-100">
-                      <td className="px-4 py-3">{index + 1}</td>
-                      <td className="px-4 py-3">{worker.telegramId}</td>
-                      <td className="px-4 py-3">{worker.fullName}</td>
-                      <td className="px-4 py-3">@{worker.telegramUsername}</td>
-                      <td className="px-4 py-3">{getDepartmentName(worker.department)}</td>
-                      <td className="px-4 py-3 text-center">
+                    <tr key={worker.telegramId} className="hover">
+                      <td className="font-medium">{index + 1}</td>
+                      <td>{worker.telegramId}</td>
+                      <td className="font-medium">{worker.fullName}</td>
+                      <td className="text-primary">@{worker.telegramUsername}</td>
+                      <td>
+                        <div className="badge badge-outline backdrop-blur-sm">{getDepartmentName(worker.department)}</div>
+                      </td>
+                      <td className="text-center">
                         <div className="tooltip" data-tip={WorkerStatusLabels[worker.workerStatus]}>
                           {getStatusIcon(worker.workerStatus)}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="text-right">
                         <button
-                          className="btn btn-xs btn-outline"
+                          className="btn btn-xs btn-outline rounded-lg"
                           onClick={() => onEditWorker(worker)}
                           disabled={isLoading}
                         >
@@ -189,16 +225,17 @@ export const WorkerList = ({
           {/* Карточки для мобильных устройств */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredWorkers.length === 0 ? (
-              <div className="text-center py-8 border rounded-lg bg-base-100">
-                Нет работников для отображения
+              <div className="text-center py-8 rounded-xl bg-base-200/70 backdrop-blur-sm shadow-md">
+                <MdSearch className="text-4xl mx-auto mb-2 opacity-50" />
+                <p>Нет работников для отображения</p>
               </div>
             ) : (
               filteredWorkers.map((worker, index) => (
-                <div key={worker.telegramId} className="card bg-base-100 shadow-sm">
-                  <div className="card-body p-4">
+                <div key={worker.telegramId} className="card bg-base-100/80 backdrop-blur-sm shadow-xl border border-base-300/30 rounded-xl">
+                  <div className="card-body p-5">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        <span className="badge badge-sm">{index + 1}</span>
+                        <div className="badge badge-primary rounded-lg">{index + 1}</div>
                         <h3 className="card-title text-base">{worker.fullName}</h3>
                       </div>
                       <div className="flex items-center gap-2">
@@ -206,7 +243,7 @@ export const WorkerList = ({
                           {getStatusIcon(worker.workerStatus)}
                         </div>
                         <button
-                          className="btn btn-xs btn-outline"
+                          className="btn btn-xs btn-outline rounded-lg"
                           onClick={() => onEditWorker(worker)}
                           disabled={isLoading}
                         >
@@ -215,18 +252,20 @@ export const WorkerList = ({
                       </div>
                     </div>
                     
+                    <div className="h-px bg-gradient-to-r from-transparent via-base-300/50 to-transparent w-full my-3"></div>
+                    
                     <div className="mt-2 text-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MdOutlineBadge className="text-gray-500" />
+                      <div className="flex items-center gap-2 mb-2">
+                        <MdOutlineBadge className="text-base-content/70" />
                         <span>ID: {worker.telegramId}</span>
                       </div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <MdPerson className="text-gray-500" />
-                        <span>@{worker.telegramUsername}</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <MdPerson className="text-base-content/70" />
+                        <span className="text-primary">@{worker.telegramUsername}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <MdCategory className="text-gray-500" />
-                        <span>{getDepartmentName(worker.department)}</span>
+                        <MdCategory className="text-base-content/70" />
+                        <div className="badge badge-outline badge-sm backdrop-blur-sm">{getDepartmentName(worker.department)}</div>
                       </div>
                     </div>
                   </div>

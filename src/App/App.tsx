@@ -8,6 +8,7 @@ import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { WorkerModal } from '../components/WorkerModal';
 import type { Task, Worker } from "../types";
 import { Department } from "../types";
+import { MdDashboard, MdOutlineWavingHand } from 'react-icons/md';
 
 export default function App() {
   const {
@@ -90,37 +91,65 @@ export default function App() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <AppTabs tab={tab} setTab={setTab} />
+    <div className="min-h-screen bg-gradient-to-br from-base-300 to-base-100">
+      {/* Header with glassmorphism effect */}
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-primary/80 text-primary-content shadow-lg">
+        <div className="container mx-auto py-4 px-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary-content/10 rounded-lg backdrop-blur-sm">
+                <MdDashboard className="text-3xl" />
+              </div>
+              <h1 className="text-2xl font-bold">Управление Задачами</h1>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-content/10 backdrop-blur-sm">
+              <MdOutlineWavingHand className="text-2xl animate-pulse" />
+              <span className="font-medium">Добро пожаловать!</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      <AnimatePresence mode="wait">
-        {tab === 'tasks' && (
-          <TaskList
-            filteredTasks={filteredTasks}
-            filterStatus={filterStatus}
-            setFilterStatus={setFilterStatus}
-            filterDepartment={filterDepartment}
-            setFilterDepartment={setFilterDepartment}
-            updateTaskStatus={updateTaskStatus}
-            removeTask={removeTask}
-            onAddNewTask={handleAddNewTask}
-            onEditTask={handleEditTask}
-            onViewTaskDetails={setSelectedTask}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
+      {/* Main Content */}
+      <main className="container mx-auto py-8 px-6">
+        <div className="bg-base-100/80 backdrop-blur-sm rounded-box shadow-xl border border-base-300/50">
+          <div className="p-6">
+            <AppTabs tab={tab} setTab={setTab} />
 
-        {tab === 'workers' && (
-          <WorkerList
-            workers={workers}
-            onEditWorker={handleEditWorker}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
-      </AnimatePresence>
+            <div className="mt-6">
+              <AnimatePresence mode="wait">
+                {tab === 'tasks' && (
+                  <TaskList
+                    filteredTasks={filteredTasks}
+                    filterStatus={filterStatus}
+                    setFilterStatus={setFilterStatus}
+                    filterDepartment={filterDepartment}
+                    setFilterDepartment={setFilterDepartment}
+                    updateTaskStatus={updateTaskStatus}
+                    removeTask={removeTask}
+                    onAddNewTask={handleAddNewTask}
+                    onEditTask={handleEditTask}
+                    onViewTaskDetails={setSelectedTask}
+                    isLoading={isLoading}
+                    error={error}
+                  />
+                )}
 
+                {tab === 'workers' && (
+                  <WorkerList
+                    workers={workers}
+                    onEditWorker={handleEditWorker}
+                    isLoading={isLoading}
+                    error={error}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Modals */}
       <TaskModal
         isOpen={showTaskModal}
         newTask={newTask}

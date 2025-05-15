@@ -1,5 +1,6 @@
 import type { NewWorker, Worker } from '../types';
 import { Department, DepartmentLabels } from '../types';
+import { MdPerson, MdCategory, MdOutlineBadge, MdAlternateEmail, MdEdit, MdAdd } from 'react-icons/md';
 
 interface WorkerModalProps {
   isOpen: boolean;
@@ -19,56 +20,103 @@ export const WorkerModal = ({
   onClose
 }: WorkerModalProps) => {
   return (
-    <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">
-          {editWorker ? 'Редактировать работника' : 'Новый работник'}
-        </h3>
-        <input
-          className="input input-bordered w-full mb-2"
-          placeholder="ФИО"
-          value={newWorker.fullName}
-          onChange={e => setNewWorker({ ...newWorker, fullName: e.target.value })}
-        />
+    <dialog className={`modal backdrop-blur-sm ${isOpen ? 'modal-open' : ''}`}>
+      <div className="modal-box bg-base-100/90 backdrop-blur-md shadow-2xl border border-base-300/30 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          {editWorker ? (
+            <div className="p-2 bg-primary/20 rounded-lg backdrop-blur-sm">
+              <MdEdit className="text-2xl text-primary" />
+            </div>
+          ) : (
+            <div className="p-2 bg-primary/20 rounded-lg backdrop-blur-sm">
+              <MdAdd className="text-2xl text-primary" />
+            </div>
+          )}
+          <h3 className="font-bold text-xl">
+            {editWorker ? 'Редактировать работника' : 'Новый работник'}
+          </h3>
+        </div>
+        
+        <div className="form-control mb-5">
+          <label className="label">
+            <span className="label-text flex items-center gap-2 text-base-content/80">
+              <MdPerson /> ФИО
+            </span>
+          </label>
+          <input
+            className="input input-bordered w-full focus:input-primary rounded-xl bg-base-200/50 backdrop-blur-sm"
+            placeholder="Введите полное имя"
+            value={newWorker.fullName}
+            onChange={e => setNewWorker({ ...newWorker, fullName: e.target.value })}
+          />
+        </div>
+        
         {!editWorker && (
           <>
-            <input
-              className="input input-bordered w-full mb-2"
-              placeholder="Telegram ID"
-              type="number"
-              value={newWorker.telegramId || ''}
-              onChange={e => setNewWorker({ ...newWorker, telegramId: Number(e.target.value) })}
-            />
-            <input
-              className="input input-bordered w-full mb-2"
-              placeholder="Telegram username"
-              value={newWorker.telegramUsername}
-              onChange={e => setNewWorker({ ...newWorker, telegramUsername: e.target.value })}
-            />
+            <div className="form-control mb-5">
+              <label className="label">
+                <span className="label-text flex items-center gap-2 text-base-content/80">
+                  <MdOutlineBadge /> Telegram ID
+                </span>
+              </label>
+              <input
+                className="input input-bordered w-full focus:input-primary rounded-xl bg-base-200/50 backdrop-blur-sm"
+                placeholder="Введите ID пользователя в Telegram"
+                type="number"
+                value={newWorker.telegramId || ''}
+                onChange={e => setNewWorker({ ...newWorker, telegramId: Number(e.target.value) })}
+              />
+            </div>
+            
+            <div className="form-control mb-5">
+              <label className="label">
+                <span className="label-text flex items-center gap-2 text-base-content/80">
+                  <MdAlternateEmail /> Telegram username
+                </span>
+              </label>
+              <div className="input-group rounded-xl overflow-hidden bg-base-200/50 backdrop-blur-sm">
+                <span className="bg-base-300/50 backdrop-blur-sm">@</span>
+                <input
+                  className="input w-full focus:input-primary bg-transparent"
+                  placeholder="username"
+                  value={newWorker.telegramUsername}
+                  onChange={e => setNewWorker({ ...newWorker, telegramUsername: e.target.value })}
+                />
+              </div>
+            </div>
           </>
         )}
-        <select
-          className="select select-bordered w-full mb-4"
-          value={newWorker.department}
-          onChange={e => {
-            console.log('Выбран отдел:', e.target.value, 'Название:', DepartmentLabels[Number(e.target.value) as Department]);
-            setNewWorker({ ...newWorker, department: Number(e.target.value) as Department });
-          }}
-        >
-          <option disabled value="">Выберите отдел</option>
-          {Object.values(Department)
-            .filter(v => typeof v === 'number' && v !== Department.Empty)
-            .map(dept => (
-              <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>
-            ))
-          }
-        </select>
-        <div className="modal-action">
-          <button className="btn btn-outline" onClick={onClose}>
+        
+        <div className="form-control mb-5">
+          <label className="label">
+            <span className="label-text flex items-center gap-2 text-base-content/80">
+              <MdCategory /> Отдел
+            </span>
+          </label>
+          <select
+            className="select select-bordered w-full focus:select-primary rounded-xl bg-base-200/50 backdrop-blur-sm"
+            value={newWorker.department}
+            onChange={e => {
+              console.log('Выбран отдел:', e.target.value, 'Название:', DepartmentLabels[Number(e.target.value) as Department]);
+              setNewWorker({ ...newWorker, department: Number(e.target.value) as Department });
+            }}
+          >
+            <option disabled value="">Выберите отдел</option>
+            {Object.values(Department)
+              .filter(v => typeof v === 'number' && v !== Department.Empty)
+              .map(dept => (
+                <option key={dept} value={dept}>{DepartmentLabels[dept as Department]}</option>
+              ))
+            }
+          </select>
+        </div>
+        
+        <div className="modal-action gap-3">
+          <button className="btn btn-outline rounded-xl hover:bg-base-200/50" onClick={onClose}>
             Отмена
           </button>
-          <button className="btn btn-primary" onClick={onSave}>
-            Сохранить
+          <button className="btn btn-primary rounded-xl shadow-md hover:shadow-lg transition-all duration-300" onClick={onSave}>
+            {editWorker ? 'Обновить' : 'Создать'}
           </button>
         </div>
       </div>

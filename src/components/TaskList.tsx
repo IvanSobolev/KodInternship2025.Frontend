@@ -14,7 +14,9 @@ import {
   MdError,
   MdFilterList,
   MdPerson,
-  MdCategory
+  MdCategory,
+  MdSort,
+  MdFilterAlt
 } from 'react-icons/md';
 import { RiPencilFill } from 'react-icons/ri';
 import { useState } from 'react';
@@ -81,148 +83,179 @@ export const TaskList = ({
   
   return (
     <motion.div key="tasks" {...animationProps}>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:max-w-lg">
-          <div className="relative flex-1">
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-primary/20 backdrop-blur-sm">
+              <MdSort className="text-2xl text-primary" />
+            </span>
+            Список задач
+          </h2>
+          <button
+            className="btn btn-primary btn-md gap-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+            onClick={onAddNewTask}
+            disabled={isLoading}
+          >
+            <MdAdd size={20} /> <span>Добавить задачу</span>
+          </button>
+        </div>
+        
+        <div className="bg-base-200/70 backdrop-blur-sm p-5 rounded-xl shadow-md mb-8">
+          <div className="text-sm font-medium mb-3 flex items-center gap-2">
+            <MdFilterAlt className="text-primary" /> Фильтры
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <div className="relative">
+                <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+                <select
+                  className="select select-bordered w-full pl-10 rounded-xl bg-base-100/70 backdrop-blur-sm focus:bg-base-100"
+                  value={filterDepartment}
+                  onChange={e => {
+                    console.log('Выбран фильтр отдела:', e.target.value);
+                    setFilterDepartment(e.target.value);
+                  }}
+                  disabled={isLoading}
+                >
+                  <option value="">Все отделы</option>
+                  {Object.entries(DepartmentLabels)
+                    .filter(([deptId]) => Number(deptId) !== Department.Empty)
+                    .map(([deptId, deptName]) => {
+                      console.log('Отдел в списке фильтров:', deptId, deptName);
+                      return (
+                        <option key={deptId} value={deptName}>
+                          {deptName}
+                        </option>
+                      );
+                    })
+                  }
+                </select>
+              </div>
+            </div>
             <div className="relative">
               <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
               <select
-                className="select select-bordered w-full pl-10"
-                value={filterDepartment}
-                onChange={e => {
-                  console.log('Выбран фильтр отдела:', e.target.value);
-                  setFilterDepartment(e.target.value);
-                }}
+                className="select select-bordered pl-10 w-full rounded-xl bg-base-100/70 backdrop-blur-sm focus:bg-base-100"
+                value={filterStatus === null ? '' : filterStatus.toString()}
+                onChange={e => setFilterStatus(e.target.value === '' ? null : Number(e.target.value) as TaskStatus)}
                 disabled={isLoading}
               >
-                <option value="">Все отделы</option>
-                {Object.entries(DepartmentLabels)
-                  .filter(([deptId]) => Number(deptId) !== Department.Empty)
-                  .map(([deptId, deptName]) => {
-                    console.log('Отдел в списке фильтров:', deptId, deptName);
-                    return (
-                      <option key={deptId} value={deptName}>
-                        {deptName}
-                      </option>
-                    );
-                  })
-                }
+                <option value="">Все статусы</option>
+                {Object.values(TaskStatus).filter(value => typeof value === 'number').map(status => (
+                  <option key={status} value={status}>{TaskStatusLabels[status as TaskStatus]}</option>
+                ))}
               </select>
             </div>
           </div>
-          <div className="relative">
-            <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
-            <select
-              className="select select-bordered pl-10 w-full"
-              value={filterStatus === null ? '' : filterStatus.toString()}
-              onChange={e => setFilterStatus(e.target.value === '' ? null : Number(e.target.value) as TaskStatus)}
-              disabled={isLoading}
-            >
-              <option value="">Все статусы</option>
-              {Object.values(TaskStatus).filter(value => typeof value === 'number').map(status => (
-                <option key={status} value={status}>{TaskStatusLabels[status as TaskStatus]}</option>
-              ))}
-            </select>
-          </div>
         </div>
-        <button
-          className="btn btn-primary flex items-center gap-2 w-full sm:w-auto"
-          onClick={onAddNewTask}
-          disabled={isLoading}
-        >
-          <MdAdd size={20} /> <span className="hidden sm:inline">Добавить задачу</span>
-        </button>
       </div>
 
       {error && (
-        <div className="alert alert-error mb-4">
-          <MdError className="shrink-0 h-6 w-6" />
-          <span>{error}</span>
+        <div className="alert alert-error shadow-lg mb-6 rounded-xl">
+          <div className="flex items-center">
+            <MdError className="shrink-0 h-6 w-6" />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <span className="loading loading-spinner loading-lg"></span>
+        <div className="flex flex-col justify-center items-center py-16 bg-base-200/70 backdrop-blur-sm rounded-xl">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/70">Загрузка данных...</p>
         </div>
       ) : (
         <>
           {/* Таблица для десктопов */}
-          <div className="hidden md:block border rounded-lg">
-            <table className="table w-full">
-              <thead className="bg-base-200">
+          <div className="hidden md:block rounded-xl overflow-hidden shadow-xl bg-base-100/80 backdrop-blur-sm border border-base-300/30">
+            <table className="table table-zebra w-full">
+              <thead className="bg-base-200/80 backdrop-blur-sm text-base-content">
                 <tr>
-                  <th>ID / Название</th>
-                  <th>Отдел</th>
-                  <th>Исполнитель</th>
-                  <th className="text-center">Статус</th>
-                  <th className="text-right">Действия</th>
+                  <th className="bg-opacity-80 rounded-tl-xl">#</th>
+                  <th className="bg-opacity-80">Название</th>
+                  <th className="bg-opacity-80">Отдел</th>
+                  <th className="bg-opacity-80">Исполнитель</th>
+                  <th className="text-center bg-opacity-80">Статус</th>
+                  <th className="text-right bg-opacity-80 rounded-tr-xl">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8">
-                      Нет задач для отображения
+                    <td colSpan={6} className="text-center py-8 text-base-content/70">
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <MdSearch className="text-4xl mb-2 opacity-50" />
+                        <p>Нет задач для отображения</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   filteredTasks.map((task, index) => (
-                    <tr key={task.id} className="hover:bg-base-100">
-                      <td className="px-4 py-3">
-                        <span className="mr-2">{index + 1}</span>
+                    <tr key={task.id} className="hover">
+                      <td className="font-medium">{index + 1}</td>
+                      <td>
                         <button
-                          className="text-blue-500"
+                          className="font-medium text-primary hover:underline"
                           onClick={() => onViewTaskDetails(task)}
                         >
                           {task.title}
                         </button>
                       </td>
-                      <td className="px-4 py-3">{getDepartmentName(task.department)}</td>
-                      <td className="px-4 py-3">{task.assignedWorkerId ? `ID: ${task.assignedWorkerId}` : '-'}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td>
+                        <div className="badge badge-outline backdrop-blur-sm">{getDepartmentName(task.department)}</div>
+                      </td>
+                      <td>{task.assignedWorkerId ? 
+                        <div className="flex items-center gap-1">
+                          <MdPerson className="text-base-content/70" />
+                          <span>ID: {task.assignedWorkerId}</span>
+                        </div> : 
+                        <span className="text-base-content/50">Не назначен</span>}
+                      </td>
+                      <td className="text-center">
                         <div className="tooltip" data-tip={TaskStatusLabels[task.status]}>
                           {getStatusIcon(task.status)}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        {task.status === TaskStatus.ToDo && (
+                      <td className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {task.status === TaskStatus.ToDo && (
+                            <button
+                              className="btn btn-xs btn-outline rounded-lg"
+                              onClick={() => onEditTask(task)}
+                              disabled={isLoading}
+                            >
+                              <RiPencilFill size={16} />
+                            </button>
+                          )}
+                          {task.status === TaskStatus.OnReview && (
+                            <>
+                              <button
+                                className="btn btn-xs btn-success rounded-lg tooltip backdrop-blur-sm"
+                                data-tip="Утвердить задачу"
+                                onClick={() => updateTaskStatus(task.id, TaskStatus.Done)}
+                                disabled={isLoading}
+                              >
+                                <MdCheck size={16} />
+                              </button>
+                              <button
+                                className="btn btn-xs btn-warning rounded-lg tooltip backdrop-blur-sm"
+                                data-tip="Вернуть на доработку"
+                                onClick={() => updateTaskStatus(task.id, TaskStatus.InProgress)}
+                                disabled={isLoading}
+                              >
+                                <MdClose size={16} />
+                              </button>
+                            </>
+                          )}
                           <button
-                            className="btn btn-xs btn-outline mr-1"
-                            onClick={() => onEditTask(task)}
+                            className="btn btn-xs btn-error tooltip rounded-lg backdrop-blur-sm" 
+                            data-tip="Удалить задачу"
+                            onClick={() => removeTask(task.id)}
                             disabled={isLoading}
                           >
-                            <RiPencilFill size={16} />
+                            <MdDelete size={16} />
                           </button>
-                        )}
-                        {task.status === TaskStatus.OnReview && (
-                          <>
-                            <button
-                              className="btn btn-xs btn-success mr-1 tooltip"
-                              data-tip="Утвердить задачу"
-                              onClick={() => updateTaskStatus(task.id, TaskStatus.Done)}
-                              disabled={isLoading}
-                            >
-                              <MdCheck size={16} />
-                            </button>
-                            <button
-                              className="btn btn-xs btn-warning mr-1 tooltip"
-                              data-tip="Вернуть на доработку"
-                              onClick={() => updateTaskStatus(task.id, TaskStatus.InProgress)}
-                              disabled={isLoading}
-                            >
-                              <MdClose size={16} />
-                            </button>
-                          </>
-                        )}
-                        <button
-                          className="btn btn-xs btn-error tooltip" 
-                          data-tip="Удалить задачу"
-                          onClick={() => removeTask(task.id)}
-                          disabled={isLoading}
-                        >
-                          <MdDelete size={16} />
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -234,16 +267,17 @@ export const TaskList = ({
           {/* Карточки для мобильных устройств */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredTasks.length === 0 ? (
-              <div className="text-center py-8 border rounded-lg bg-base-100">
-                Нет задач для отображения
+              <div className="text-center py-8 rounded-xl bg-base-200/70 backdrop-blur-sm shadow-md">
+                <MdSearch className="text-4xl mx-auto mb-2 opacity-50" />
+                <p>Нет задач для отображения</p>
               </div>
             ) : (
               filteredTasks.map((task, index) => (
-                <div key={task.id} className="card bg-base-100 shadow-sm">
-                  <div className="card-body p-4">
+                <div key={task.id} className="card bg-base-100/80 backdrop-blur-sm shadow-xl border border-base-300/30 rounded-xl">
+                  <div className="card-body p-5">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        <span className="badge badge-sm">{index + 1}</span>
+                        <div className="badge badge-primary rounded-lg">{index + 1}</div>
                         <h3 className="card-title text-base" onClick={() => onViewTaskDetails(task)}>
                           {task.title}
                         </h3>
@@ -253,13 +287,15 @@ export const TaskList = ({
                       </div>
                     </div>
                     
+                    <div className="h-px bg-gradient-to-r from-transparent via-base-300/50 to-transparent w-full my-3"></div>
+                    
                     <div className="mt-2 text-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MdCategory className="text-gray-500" />
-                        <span>{getDepartmentName(task.department)}</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <MdCategory className="text-base-content/70" />
+                        <div className="badge badge-outline badge-sm backdrop-blur-sm">{getDepartmentName(task.department)}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <MdPerson className="text-gray-500" />
+                        <MdPerson className="text-base-content/70" />
                         <span>{task.assignedWorkerId ? `ID: ${task.assignedWorkerId}` : 'Не назначен'}</span>
                       </div>
                     </div>
@@ -267,7 +303,7 @@ export const TaskList = ({
                     <div className="card-actions justify-end mt-3">
                       {task.status === TaskStatus.ToDo && (
                         <button
-                          className="btn btn-xs btn-outline"
+                          className="btn btn-xs btn-outline rounded-lg"
                           onClick={() => onEditTask(task)}
                           disabled={isLoading}
                         >
@@ -277,14 +313,14 @@ export const TaskList = ({
                       {task.status === TaskStatus.OnReview && (
                         <>
                           <button
-                            className="btn btn-xs btn-success"
+                            className="btn btn-xs btn-success rounded-lg backdrop-blur-sm"
                             onClick={() => updateTaskStatus(task.id, TaskStatus.Done)}
                             disabled={isLoading}
                           >
                             <MdCheck size={16} className="mr-1" /> Утвердить
                           </button>
                           <button
-                            className="btn btn-xs btn-warning"
+                            className="btn btn-xs btn-warning rounded-lg backdrop-blur-sm"
                             onClick={() => updateTaskStatus(task.id, TaskStatus.InProgress)}
                             disabled={isLoading}
                           >
@@ -293,7 +329,7 @@ export const TaskList = ({
                         </>
                       )}
                       <button
-                        className="btn btn-xs btn-error" 
+                        className="btn btn-xs btn-error rounded-lg backdrop-blur-sm" 
                         onClick={() => removeTask(task.id)}
                         disabled={isLoading}
                       >
