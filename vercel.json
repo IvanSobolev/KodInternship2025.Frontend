@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --ignore-scripts",
-  "framework": "vite",
-  "outputDirectory": "dist"
-} 
