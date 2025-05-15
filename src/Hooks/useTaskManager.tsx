@@ -203,6 +203,19 @@ export const useTaskManager = () => {
 
   // Инициализация SignalR соединения
   useEffect(() => {
+    // Информация о текущем статусе соединения
+    const checkConnection = () => {
+      if (!signalRService.isConnected()) {
+        console.log('SignalR соединение отсутствует. Подключаемся...');
+        addToast('Восстанавливаем соединение с сервером уведомлений...', 'info');
+        signalRService.connect().then(() => {
+          if (signalRService.isConnected()) {
+            addToast('Соединение с сервером уведомлений установлено', 'success');
+          }
+        });
+      }
+    };
+    
     // Подключаемся к SignalR серверу
     signalRService.connect();
     
@@ -211,14 +224,18 @@ export const useTaskManager = () => {
     signalRService.addTaskAcceptedListener(handleTaskAccepted);
     signalRService.addTaskStatusChangedListener(handleTaskStatusChanged);
     
+    // Периодическая проверка соединения
+    const connectionChecker = setInterval(checkConnection, 30000);
+    
     // Отключаемся при размонтировании компонента
     return () => {
+      clearInterval(connectionChecker);
       signalRService.removeNewTaskCreatedListener(handleNewTaskCreated);
       signalRService.removeTaskAcceptedListener(handleTaskAccepted);
       signalRService.removeTaskStatusChangedListener(handleTaskStatusChanged);
       signalRService.disconnect();
     };
-  }, [handleNewTaskCreated, handleTaskAccepted, handleTaskStatusChanged]);
+  }, [handleNewTaskCreated, handleTaskAccepted, handleTaskStatusChanged, addToast]);
 
   // Загрузка данных при первом рендере
   useEffect(() => {
@@ -305,10 +322,20 @@ export const useTaskManager = () => {
       // В зависимости от статуса используем разные API
       if (status === TaskStatus.InProgress) {
         await taskApi.cancelReview(id);
+        addToast('Задача возвращена в работу', 'info');
       } else if (status === TaskStatus.OnReview) {
         await taskApi.completeTask(id);
+        // Добавляем явное уведомление при отправке задачи на ревью
+        addToast('Задача отправлена на проверку', 'success');
       } else if (status === TaskStatus.Done) {
         await taskApi.finishTask(id);
+        addToast('Задача завершена успешно', 'success');
+      }
+      
+      // Проверяем подключение к WebSocket
+      if (!signalRService.isConnected()) {
+        console.log('WebSocket соединение отсутствует. Пробуем переподключиться...');
+        await signalRService.connect();
       }
       
       // Обновляем состояние в интерфейсе
@@ -316,6 +343,7 @@ export const useTaskManager = () => {
     } catch (err) {
       console.error('Ошибка при обновлении статуса задачи:', err);
       setError('Ошибка при обновлении статуса задачи');
+      addToast('Ошибка при изменении статуса задачи', 'error');
     } finally {
       setIsLoading(false);
     }

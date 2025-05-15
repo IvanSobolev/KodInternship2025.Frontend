@@ -74,7 +74,11 @@ export const TaskList = ({
       case TaskStatus.InProgress:
         return <MdOutlineRemoveCircle size={20} className="text-yellow-500" />;
       case TaskStatus.OnReview:
-        return <MdHourglassEmpty size={20} className="text-blue-500" />;
+        return (
+          <div className="animate-pulse">
+            <MdHourglassEmpty size={20} className="text-accent" />
+          </div>
+        );
       case TaskStatus.Done:
         return <MdCheckCircle size={20} className="text-green-500" />;
       default:
@@ -240,7 +244,7 @@ export const TaskList = ({
                             </button>
                           )}
                           {task.status === TaskStatus.OnReview && (
-                            <>
+                            <div className="flex justify-end gap-1">
                               <button
                                 className="btn btn-xs btn-success rounded-lg tooltip backdrop-blur-sm"
                                 data-tip="Утвердить задачу"
@@ -257,7 +261,7 @@ export const TaskList = ({
                               >
                                 <MdClose size={16} />
                               </button>
-                            </>
+                            </div>
                           )}
                           <button
                             className="btn btn-xs btn-error tooltip rounded-lg backdrop-blur-sm" 
@@ -323,22 +327,24 @@ export const TaskList = ({
                         </button>
                       )}
                       {task.status === TaskStatus.OnReview && (
-                        <>
+                        <div className="card-actions justify-end mt-3 gap-2">
                           <button
-                            className="btn btn-xs btn-success rounded-lg backdrop-blur-sm"
+                            className="btn btn-xs btn-success rounded-lg tooltip backdrop-blur-sm"
+                            data-tip="Утвердить задачу"
                             onClick={() => updateTaskStatus(task.id, TaskStatus.Done)}
                             disabled={isLoading}
                           >
-                            <MdCheck size={16} className="mr-1" /> Утвердить
+                            <MdCheck size={16} />
                           </button>
                           <button
-                            className="btn btn-xs btn-warning rounded-lg backdrop-blur-sm"
+                            className="btn btn-xs btn-warning rounded-lg tooltip backdrop-blur-sm"
+                            data-tip="Вернуть на доработку"
                             onClick={() => updateTaskStatus(task.id, TaskStatus.InProgress)}
                             disabled={isLoading}
                           >
-                            <MdClose size={16} className="mr-1" /> Доработать
+                            <MdClose size={16} />
                           </button>
-                        </>
+                        </div>
                       )}
                       <button
                         className="btn btn-xs btn-error rounded-lg backdrop-blur-sm" 

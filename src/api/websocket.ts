@@ -1,10 +1,11 @@
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import type { Task } from '../types';
 
-// SignalR URL to the hub endpoint
-const HUB_URL = 'http://150.241.88.0:8080/taskNotificationHub';
+// Ensure this URL matches the same domain as the API
+const API_URL = 'http://150.241.88.0:8080';
+const HUB_URL = `${API_URL}/taskNotificationHub`;
 
-// Set to true to disable SignalR connections temporarily during development
+// Set to false to enable SignalR connections
 const DISABLE_SIGNALR = false;
 
 export interface TaskUpdateMessage {
@@ -18,6 +19,8 @@ export class SignalRService {
   private newTaskCreatedListeners: ((task: Task) => void)[] = [];
   private taskAcceptedListeners: ((task: Task, workerId: number) => void)[] = [];
   private taskStatusChangedListeners: ((data: { taskId: string; newStatus: string; assignedWorkerId?: number }) => void)[] = [];
+  private connectionRetryCount = 0;
+  private maxRetries = 5;
   
   // Initialize connection
   public async connect(): Promise<void> {
@@ -31,7 +34,7 @@ export class SignalRService {
     try {
       this.connection = new HubConnectionBuilder()
         .withUrl(HUB_URL)
-        .withAutomaticReconnect()
+        .withAutomaticReconnect([0, 1000, 5000, 10000, 30000]) // More aggressive reconnection strategy
         .configureLogging(LogLevel.Information)
         .build();
       
@@ -51,12 +54,42 @@ export class SignalRService {
         this.taskStatusChangedListeners.forEach(listener => listener(data));
       });
       
+      // Add connection status change handlers
+      this.connection.onreconnecting((error) => {
+        console.warn('Переподключение к SignalR:', error);
+      });
+      
+      this.connection.onreconnected((connectionId) => {
+        console.log('SignalR успешно переподключен. ID соединения:', connectionId);
+      });
+      
+      this.connection.onclose((error) => {
+        console.error('SignalR соединение закрыто:', error);
+        this.retryConnection();
+      });
+      
       // Start the connection
       await this.connection.start();
       console.log('SignalR соединение установлено');
+      this.connectionRetryCount = 0;
       
     } catch (error) {
       console.error('Ошибка при установке SignalR соединения:', error);
+      this.retryConnection();
+    }
+  }
+  
+  // Retry connection with exponential backoff
+  private retryConnection(): void {
+    if (this.connectionRetryCount < this.maxRetries) {
+      this.connectionRetryCount++;
+      const delay = Math.min(1000 * Math.pow(2, this.connectionRetryCount), 30000);
+      
+      console.log(`Повторная попытка подключения через ${delay}ms (попытка ${this.connectionRetryCount}/${this.maxRetries})`);
+      
+      setTimeout(() => {
+        this.connect();
+      }, delay);
     }
   }
   
@@ -102,6 +135,11 @@ export class SignalRService {
   // Remove task status changed listener
   public removeTaskStatusChangedListener(listener: (data: { taskId: string; newStatus: string; assignedWorkerId?: number }) => void): void {
     this.taskStatusChangedListeners = this.taskStatusChangedListeners.filter(l => l !== listener);
+  }
+  
+  // Check if connection is active
+  public isConnected(): boolean {
+    return this.connection?.state === 'Connected';
   }
 }
 
