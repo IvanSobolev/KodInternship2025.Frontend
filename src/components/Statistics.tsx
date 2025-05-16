@@ -94,7 +94,7 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
         <h3 className="text-lg font-semibold mb-2">Выберите отдел для анализа:</h3>
         <div className="flex flex-wrap gap-2">
           <button
-            className={`btn ${selectedDepartment === null ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn btn-sm sm:btn-md ${selectedDepartment === null ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setSelectedDepartment(null)}
           >
             Все отделы
@@ -104,7 +104,7 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
             .map(([key, label]) => (
               <button
                 key={key}
-                className={`btn ${selectedDepartment === parseInt(key) ? 'btn-primary' : 'btn-outline'}`}
+                className={`btn btn-sm sm:btn-md ${selectedDepartment === parseInt(key) ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setSelectedDepartment(parseInt(key))}
               >
                 {label}
@@ -204,7 +204,9 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
       <div className="card bg-base-200 shadow-lg mt-8">
         <div className="card-body">
           <h3 className="card-title">Детальная информация по работникам</h3>
-          <div className="overflow-x-auto">
+          
+          {/* Таблица для десктопов */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
@@ -235,6 +237,41 @@ export const Statistics = ({ tasks, workers }: StatisticsProps) => {
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Карточки для мобильных устройств */}
+          <div className="md:hidden space-y-4 mt-4">
+            {workerStats.map((stat) => (
+              <div key={stat.workerId} className={`card shadow-md border ${stat.averageTaskTime > 8 ? 'border-warning/40 bg-warning/10' : 'border-base-300 bg-base-100'}`}>
+                <div className="card-body p-4">
+                  <h4 className="font-medium text-lg">{stat.fullName}</h4>
+                  <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base-content/70">Отдел:</span>
+                      <span>{DepartmentLabels[stat.department]}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base-content/70">Всего задач:</span>
+                      <span>{stat.totalTasks}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base-content/70">Время (ч):</span>
+                      <span className={stat.averageTaskTime > 8 ? 'font-bold text-warning' : ''}>
+                        {stat.averageTaskTime}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base-content/70">Статус:</span>
+                      {stat.averageTaskTime > 8 ? (
+                        <span className="badge badge-warning">Требует внимания</span>
+                      ) : (
+                        <span className="badge badge-success">Норма</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

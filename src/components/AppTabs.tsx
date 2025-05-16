@@ -10,10 +10,10 @@ export const AppTabs = ({ tab, setTab }: AppTabsProps) => {
   return (
     <div className="flex flex-col">
       <h2 className="text-xl font-semibold mb-4 text-primary">Управление системой</h2>
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
         <button
           role="tab"
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+          className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl transition-all duration-300 w-full sm:w-auto ${
             tab === 'tasks' 
               ? 'bg-primary text-primary-content shadow-lg' 
               : 'bg-base-200/50 backdrop-blur-sm hover:bg-base-200'
@@ -25,7 +25,7 @@ export const AppTabs = ({ tab, setTab }: AppTabsProps) => {
         </button>
         <button
           role="tab"
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+          className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl transition-all duration-300 w-full sm:w-auto ${
             tab === 'workers' 
               ? 'bg-primary text-primary-content shadow-lg' 
               : 'bg-base-200/50 backdrop-blur-sm hover:bg-base-200'
@@ -37,7 +37,7 @@ export const AppTabs = ({ tab, setTab }: AppTabsProps) => {
         </button>
         <button
           role="tab"
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+          className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl transition-all duration-300 w-full sm:w-auto ${
             tab === 'statistics' 
               ? 'bg-primary text-primary-content shadow-lg' 
               : 'bg-base-200/50 backdrop-blur-sm hover:bg-base-200'

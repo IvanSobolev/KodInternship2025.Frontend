@@ -108,9 +108,9 @@ export default function App() {
       </ToastContainer>
 
       {/* Main Content */}
-      <main className="container mx-auto py-8 px-6">
+      <main className="container mx-auto py-6 px-4 sm:py-8 sm:px-6">
         <div className="bg-base-100/80 backdrop-blur-sm rounded-box shadow-xl border border-base-300/50">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <AppTabs tab={tab} setTab={setTab} />
 
             <div className="mt-6">

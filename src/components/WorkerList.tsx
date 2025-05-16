@@ -91,7 +91,7 @@ export const WorkerList = ({
   return (
     <motion.div key="workers" {...animationProps}>
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-primary/20 backdrop-blur-sm">
               <MdPeople className="text-2xl text-primary" />
@@ -104,8 +104,8 @@ export const WorkerList = ({
           <div className="text-sm font-medium mb-3 flex items-center gap-2">
             <MdFilterAlt className="text-primary" /> Фильтры
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1 max-w-xs">
+          <div className="flex flex-col gap-3">
+            <div className="relative w-full sm:max-w-xs">
               <div className="relative">
                 <MdFilterList className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
                 <select
