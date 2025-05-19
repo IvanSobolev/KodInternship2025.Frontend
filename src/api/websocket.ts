@@ -2,7 +2,7 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 import type { Task } from '../types';
 
 // Ensure this URL matches the same domain as the API
-const API_URL = 'http://150.241.88.0:8080';
+const API_URL = 'http://77.239.124.243:8080';
 const HUB_URL = `${API_URL}/taskNotificationHub`;
 
 // Set to false to enable SignalR connections

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Базовый URL API бэкенда
-const API_URL = 'http://150.241.88.0:8080/api';
+const API_URL = 'http://77.239.124.243:8080/api';
 
 // Создаем экземпляр axios с настройками по умолчанию
 const api = axios.create({
